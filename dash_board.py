@@ -165,13 +165,11 @@ class CustomDashboard(QMainWindow):
 
     def updateSession(self):
         #implement updating all modules with new data
+        self.data_chooser = DataChooser()
         self.data_chooser.exec()
         if (self.data_chooser.isDataReady()):
             self.active_data = self.data_chooser.getCurrentSession().get_dataframe()
             
-
-        
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

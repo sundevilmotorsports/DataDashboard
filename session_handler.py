@@ -1,7 +1,6 @@
 from session import Session
 import pandas as pd
 
-
 #array that holds different sessions accessible by the day it occured
 active_sessions = []
 

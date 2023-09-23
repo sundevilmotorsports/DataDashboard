@@ -8,7 +8,8 @@ class DataChooser(QDialog):
         super().__init__()
 
         self.session_arr = handler.get_active_sessions()
-
+        
+        
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.setWindowTitle("Choose Your Data")
