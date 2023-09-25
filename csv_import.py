@@ -19,25 +19,12 @@ class CSVImport(QDialog):
         self.setWindowIcon(QIcon("Downloads/90129757.jpg"))
 
         
-         # column select
+         # get headers
         col_select_layout: QGridLayout = QGridLayout()
         self.combo_time = QComboBox()
         self.combo_lap = QComboBox()
         self.combo_lat = QComboBox()
-        self.combo_lon = QComboBox()
-        self.combo_time.addItems(columns)
-        self.combo_lap.addItems(columns)
-        self.combo_lat.addItems(columns)
-        self.combo_lon.addItems(columns)
-        col_select_layout.addWidget(QLabel("Select Time"), 0, 0)
-        col_select_layout.addWidget(QLabel("Select Lap"), 0, 1)
-        col_select_layout.addWidget(QLabel("Select GPS Latitude"), 0, 2)
-        col_select_layout.addWidget(QLabel("Select GPS Longitude"), 0, 3)
-        col_select_layout.addWidget(self.combo_time, 1, 0)
-        col_select_layout.addWidget(self.combo_lap, 1, 1)
-        col_select_layout.addWidget(self.combo_lat, 1, 2)
-        col_select_layout.addWidget(self.combo_lon, 1, 3)
-        
+        self.combo_lon = QComboBox()        
 
         # session details
         session_details_layout: QVBoxLayout = QVBoxLayout()
@@ -61,7 +48,7 @@ class CSVImport(QDialog):
         mgmt_layout.addWidget(self.btn_cancel)
         mgmt_layout.addWidget(self.btn_import)
 
-        self.layout.addLayout(col_select_layout)
+        #self.layout.addLayout(col_select_layout)
         self.layout.addLayout(session_details_layout)
         self.layout.addLayout(mgmt_layout)
 
