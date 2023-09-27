@@ -4,7 +4,7 @@ import pandas as pd
 #from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QMdiArea, QMdiSubWindow, QWidget
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt, QTimer
 import pyqtgraph as pg
 import session as Session
 from csv_import import CSVImport
@@ -22,7 +22,7 @@ class GraphModule(QMainWindow):
         self.menubar.setStyleSheet('QMenu::item:selected { background-color: #555; }')
         self.menubar.setStyleSheet('QMenu::item:pressed { background-color: #777; }')
 
-        self.dataframe = data_frame
+        
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -31,39 +31,70 @@ class GraphModule(QMainWindow):
 
         self.sidewidget = QWidget()
         self.sidebox = QVBoxLayout()
+        self.sidebox2 = QVBoxLayout()
+
+        self.sidebox.setAlignment(Qt.AlignTop)
 
         self.plot_widget = pg.PlotWidget()
         self.layout.addWidget(self.plot_widget)
 
-        self.x_set = QComboBox(self.central_widget)
         self.x_combo = QComboBox(self.central_widget)
-        self.y_set = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
+        self.x_combo.currentIndexChanged.connect(self.plot_graph)
+        self.y_combo.currentIndexChanged.connect(self.plot_graph)
+
+        #creating dropdowns and updating dataset when changed
+        self.x_set = QComboBox(self.central_widget)
+        self.y_set = QComboBox(self.central_widget)
+        self.x_set.currentIndexChanged.connect(self.set_active_data)
+        self.y_set.currentIndexChanged.connect(self.set_active_data)
 
         self.sidebox.addWidget(QLabel("Select First Dataset:"))
         self.sidebox.addWidget(self.x_set)
+        #self.sidebox.addWidget(QLabel("")
         self.sidebox.addWidget(QLabel("Select X Axis Column:"))
         self.sidebox.addWidget(self.x_combo)
 
+        self.sidebox.addWidget(QLabel("\n"))
         self.sidebox.addWidget(QLabel("Select Second Dataset:"))
         self.sidebox.addWidget(self.y_set)
+        #self.sidebox.addWidget(QLabel(""))
         self.sidebox.addWidget(QLabel("Select Y Axis Column:"))
         self.sidebox.addWidget(self.y_combo)
 
-        self.plot_button = QPushButton("Plot Graph", self.central_widget)
-        self.sidebox.addWidget(self.plot_button)
+        #No longer needed, auto ploting
+
+        #self.plot_button = QPushButton("Plot Graph", self.central_widget)
+        #self.central_widget
         
+        #self.sidebox.addWidget(self.plot_button)
+        self.sidebox2.setAlignment(Qt.AlignTop)
+        self.dataX = handler.get_active_sessions()[self.x_set.currentIndex()].get_metadata()
+        self.dataY = handler.get_active_sessions()[self.x_set.currentIndex()].get_metadata()
+        self.sidebox2.addWidget(QLabel("Name: " + self.dataX["Name"]))
+        self.sidebox2.addWidget(QLabel("Date: " + self.dataX["Date"]))
+        self.sidebox2.addWidget(QLabel("Driver: " + self.dataX["Driver"]))
+        self.sidebox2.addWidget(QLabel("Car: " + self.dataX["Car"]))
+        self.sidebox2.addWidget(QLabel("Track: " + self.dataX["Track"]))
+        self.sidebox2.addWidget(QLabel(""))
+        self.sidebox2.addWidget(QLabel("Name: " + self.dataY["Name"]))
+        self.sidebox2.addWidget(QLabel("Date: " + self.dataY["Date"]))
+        self.sidebox2.addWidget(QLabel("Driver: " + self.dataY["Driver"]))
+        self.sidebox2.addWidget(QLabel("Car: " + self.dataY["Car"]))
+        self.sidebox2.addWidget(QLabel("Track: " + self.dataY["Track"]))
 
         self.layout.addLayout(self.sidebox)
+        self.layout.addLayout(self.sidebox2)
 
-        self.plot_button.clicked.connect(self.plot_graph)
+        #self.plot_button.clicked.connect(self.plot_graph)
+        
 
     def plot_graph(self):
         self.selected_x = self.x_combo.currentText()
         self.selected_y = self.y_combo.currentText()
 
-        self.x_data = self.dataframe[self.selected_x]
-        self.y_data = self.dataframe[self.selected_y]
+        self.x_data = self.active_dataX[self.selected_x][:min(len(self.active_dataX), len(self.active_dataY))]
+        self.y_data = self.active_dataY[self.selected_y][:min(len(self.active_dataX), len(self.active_dataY))]
 
         self.plot_widget.clear()    
         self.plot_widget.plot(self.x_data, self.y_data, pen='b')
@@ -72,12 +103,12 @@ class GraphModule(QMainWindow):
    
 
     def setComboBoxes(self, active_data:pd.DataFrame):
-        print(handler.get_names())
         self.x_set.addItems(handler.get_names())
         self.y_set.addItems(handler.get_names())
+        self.x_combo.clear()
+        self.y_combo.clear()
         self.x_combo.addItems(active_data.columns.tolist())
         self.y_combo.addItems(active_data.columns.tolist())
-        self.dataframe = active_data
         
         '''
         IMPORTANT: Not all CSVs contain the same data, meaning we need to find/make a parser/organizer to recover the columns/rows from 
@@ -85,7 +116,17 @@ class GraphModule(QMainWindow):
 
         One of 
         '''
-        
+
+    def set_active_data(self):
+        self.x_combo.clear()
+        self.y_combo.clear()
+        self.active_dataX = handler.get_active_sessions()[self.x_set.currentIndex()].get_dataframe()
+        self.active_dataY = handler.get_active_sessions()[self.y_set.currentIndex()].get_dataframe()
+        self.x_combo.addItems(self.active_dataX.columns.tolist())
+        self.y_combo.addItems(self.active_dataY.columns.tolist())
+        self.plot_graph()
+
+
 
 class CustomDashboard(QMainWindow):
     def __init__(self):
@@ -117,8 +158,6 @@ class CustomDashboard(QMainWindow):
         """self.update_session_button = QPushButton("Update Session")
         self.update_session_button.setMaximumWidth(200)
         self.update_session_button.clicked.connect(self.updateSession)"""
-
-                
 
         self.toolbar.addWidget(self.camera_module_button)
         self.toolbar.addWidget(self.velocity_module_button)
@@ -157,14 +196,14 @@ class CustomDashboard(QMainWindow):
         sub_window.show()
 
     def introduce_csv_importer(self):
-        filename = QFileDialog.getOpenFileName()
+        filename = QFileDialog.getOpenFileName(filter = "CSV Files(*.csv)")
         if filename[0] == "":
             return
         importer = CSVImport(filename[0])
         importer.exec()
         self.active_data = handler.get_active_sessions()[0].get_dataframe()
 
-    #Obsolite, initiated with intorduce_csv_importer
+    #Obsolite, initiated with introduce_csv_importer
     """def updateSession(self):
         #implement updating all modules with new data
         self.data_chooser = DataChooser()

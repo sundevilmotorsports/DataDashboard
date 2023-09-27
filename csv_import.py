@@ -9,8 +9,7 @@ class CSVImport(QDialog):
     def __init__(self, filename: str):
         super().__init__()
 
-
-        self.df: pd.DataFrame = pd.read_csv(filename)
+        self.df : pd.DataFrame = pd.read_csv(filename)
         columns = list(self.df.columns)
 
         self.layout = QVBoxLayout()
@@ -18,8 +17,7 @@ class CSVImport(QDialog):
         self.setWindowTitle("Import CSV file")
         self.setWindowIcon(QIcon("Downloads/90129757.jpg"))
 
-        
-         # get headers
+        # get headers
         col_select_layout: QGridLayout = QGridLayout()
         self.combo_time = QComboBox()
         self.combo_lap = QComboBox()
@@ -44,6 +42,7 @@ class CSVImport(QDialog):
         self.btn_cancel = QPushButton("Cancel")
         self.btn_cancel.clicked.connect(self.cancel)
         self.btn_import = QPushButton("Import")
+        self.btn_import.setDefault(True)
         self.btn_import.clicked.connect(self.accept)
         mgmt_layout.addWidget(self.btn_cancel)
         mgmt_layout.addWidget(self.btn_import)
