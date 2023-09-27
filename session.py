@@ -15,17 +15,17 @@ class Session():
 
 # add a session to the workspace
 def set_session(df, time, lap, lat, lon, name, date, driver, car, track):
-    new_metadata = pd.DataFrame({
+    new_metadata = {
         'Date': [date],
         'Driver': [driver],
         'Car': [car],
         'Track': [track],
-        'Name': [name],
+        'Name': [name][0],
         'Lap': [lap],
         'Time': [time],
         'Lon': [lon],
         'Lat': [lat]
-    })
+    }
     new_session = Session(df, new_metadata)
     return new_session
 

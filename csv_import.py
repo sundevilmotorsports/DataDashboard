@@ -28,7 +28,7 @@ class CSVImport(QDialog):
 
         # session details
         session_details_layout: QVBoxLayout = QVBoxLayout()
-        self.edit_name = QLineEdit("Session Name")
+        self.edit_name = QLineEdit(filename[filename.rfind("/") + 1:filename.rfind(".")])
         self.edit_date = QLineEdit("Session Date")
         self.edit_driver = QLineEdit("Driver")
         self.edit_car = QLineEdit("Car")

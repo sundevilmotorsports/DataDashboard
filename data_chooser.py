@@ -16,9 +16,7 @@ class DataChooser(QDialog):
         self.setWindowIcon(QIcon("90129757.jpg"))
 
         self.session_chooser = QComboBox()
-        for element in self.session_arr:
-            name = str(element.get_metadata()['Name'])
-            self.session_chooser.addItem(name)
+        self.session_chooser.addItems(handler.get_names())
 
         self.title = QLabel("Choose the session that you want to analyze")
 

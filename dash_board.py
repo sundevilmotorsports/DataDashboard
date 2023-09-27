@@ -35,13 +35,18 @@ class GraphModule(QMainWindow):
         self.plot_widget = pg.PlotWidget()
         self.layout.addWidget(self.plot_widget)
 
+        self.x_set = QComboBox(self.central_widget)
         self.x_combo = QComboBox(self.central_widget)
-      #  self.x_combo.addItems(handler.get_active_sessions()
+        self.y_set = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
 
+        self.sidebox.addWidget(QLabel("Select First Dataset:"))
+        self.sidebox.addWidget(self.x_set)
         self.sidebox.addWidget(QLabel("Select X Axis Column:"))
         self.sidebox.addWidget(self.x_combo)
 
+        self.sidebox.addWidget(QLabel("Select Second Dataset:"))
+        self.sidebox.addWidget(self.y_set)
         self.sidebox.addWidget(QLabel("Select Y Axis Column:"))
         self.sidebox.addWidget(self.y_combo)
 
@@ -67,6 +72,9 @@ class GraphModule(QMainWindow):
    
 
     def setComboBoxes(self, active_data:pd.DataFrame):
+        print(handler.get_names())
+        self.x_set.addItems(handler.get_names())
+        self.y_set.addItems(handler.get_names())
         self.x_combo.addItems(active_data.columns.tolist())
         self.y_combo.addItems(active_data.columns.tolist())
         self.dataframe = active_data
@@ -106,29 +114,22 @@ class CustomDashboard(QMainWindow):
         self.add_csv_button.setMaximumWidth(200)
         self.add_csv_button.clicked.connect(self.introduce_csv_importer)
 
-        self.update_session_button = QPushButton("Update Session")
+        """self.update_session_button = QPushButton("Update Session")
         self.update_session_button.setMaximumWidth(200)
-        self.update_session_button.clicked.connect(self.updateSession)
+        self.update_session_button.clicked.connect(self.updateSession)"""
 
                 
 
         self.toolbar.addWidget(self.camera_module_button)
         self.toolbar.addWidget(self.velocity_module_button)
         self.toolbar.addWidget(self.add_csv_button)
-        self.toolbar.addWidget(self.update_session_button)
+        #self.toolbar.addWidget(self.update_session_button)
         self.toolbar.addStretch(1)
         self.layout.addWidget(self.mdi_area)
         
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
-
-
-        self.active_data = pd.DataFrame({
-            'Column1': [1, 2, 3],
-            'Column2': [4, 5, 6],
-            'Column3': [7, 8, 9]
-        })
 
         self.data_chooser = DataChooser()
         if (self.data_chooser.isDataReady()):
@@ -139,7 +140,6 @@ class CustomDashboard(QMainWindow):
         graph_module = GraphModule(self.active_data)
         self.graph_module.setWindowIcon(QIcon("90129757.jpg"))
         sub_window.setWidget(graph_module)
-        #sub_window.setWindowIcon(QIcon("Downloads/90129757.jpg"))
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 
@@ -162,13 +162,15 @@ class CustomDashboard(QMainWindow):
             return
         importer = CSVImport(filename[0])
         importer.exec()
+        self.active_data = handler.get_active_sessions()[0].get_dataframe()
 
-    def updateSession(self):
+    #Obsolite, initiated with intorduce_csv_importer
+    """def updateSession(self):
         #implement updating all modules with new data
         self.data_chooser = DataChooser()
         self.data_chooser.exec()
         if (self.data_chooser.isDataReady()):
-            self.active_data = self.data_chooser.getCurrentSession().get_dataframe()
+            self.active_data = self.data_chooser.getCurrentSession().get_dataframe()"""
             
 
 if __name__ == "__main__":

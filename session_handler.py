@@ -10,6 +10,11 @@ def add_session(new_session):
 
 # def method for getting
 
+def get_names():
+    temp = []
+    for i in active_sessions:
+        temp.append(i.get_metadata()["Name"])
+    return temp
 
 # def method for getting laps
 
