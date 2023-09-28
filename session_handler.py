@@ -3,7 +3,6 @@ import pandas as pd
 
 #array that holds different sessions accessible by the day it occured
 active_sessions = []
-
 def add_session(new_session):
     active_sessions.append(new_session)
 
@@ -20,3 +19,6 @@ def get_names():
 
 def get_active_sessions():
     return active_sessions
+
+def get_sessions_from_csv():
+    pass

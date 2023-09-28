@@ -1,4 +1,5 @@
 import pandas as pd
+import pickle
 
 class Session():
     def __init__(self, data:pd.DataFrame, metadata:pd.DataFrame):
@@ -27,5 +28,7 @@ def set_session(df, time, lap, lat, lon, name, date, driver, car, track):
         'Lat': [lat][0]
     }
     new_session = Session(df, new_metadata)
+    with open(f"data/{name}.pkl", "wb") as f:
+        pickle.dump(new_session, f)
     return new_session
 

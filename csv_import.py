@@ -10,6 +10,7 @@ class CSVImport(QDialog):
         super().__init__()
 
         self.df : pd.DataFrame = pd.read_csv(filename)
+
         columns = list(self.df.columns)
 
         self.layout = QVBoxLayout()
