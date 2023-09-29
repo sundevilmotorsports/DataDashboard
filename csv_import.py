@@ -32,11 +32,13 @@ class CSVImport(QDialog):
         self.edit_driver = QLineEdit("Driver")
         self.edit_car = QLineEdit("Car")
         self.edit_track = QLineEdit("Track Name")
+        self.live = QCheckBox("Live")
         session_details_layout.addWidget(self.edit_name)
         session_details_layout.addWidget(self.edit_date)
         session_details_layout.addWidget(self.edit_driver)
         session_details_layout.addWidget(self.edit_car)
         session_details_layout.addWidget(self.edit_track)
+        session_details_layout.addWidget(self.live)
 
         # dialog management
         mgmt_layout: QHBoxLayout = QHBoxLayout()
@@ -66,9 +68,9 @@ class CSVImport(QDialog):
         driver = self.edit_driver.text()
         car = self.edit_car.text()
         track = self.edit_track.text()
-
+        #print("Is checked: " + str(self.live.isChecked()))
         new_session = Session.set_session(self.df, time_idx, lap_idx, lat_idx, lon_idx, name, date, driver, car, track)
-        handler.add_session(new_session)
+        handler.add_session(new_session, self.live.isChecked())
 
 
         self.done(1)

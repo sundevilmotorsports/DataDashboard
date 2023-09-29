@@ -15,11 +15,11 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 class DatasetChooser(QWidget):
-    def __init__(self, central_widget: QWidget, plot: MplCanvas):
+    def __init__(self, central_widget: QWidget, plot: MplCanvas, live = False):
         super().__init__()
         self.central_widget = central_widget
         self.plot_widget = plot
-
+        self.live = live
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
 
@@ -59,11 +59,16 @@ class DatasetChooser(QWidget):
 
     def set_combo_box(self):
         try:
-            self.x_set.addItems(handler.get_names())
+            if self.live:
+                names = handler.get_live_names()
+                data = handler.get_live_sessions()
+            else:
+                names = handler.get_names()
+                data = handler.get_active_sessions()
+            self.x_set.addItems(names)
             self.x_combo.clear()
             self.y_combo.clear()
-            self.active_dataX = handler.get_active_sessions(
-            )[0].get_dataframe()
+            self.active_dataX = data[0].get_dataframe()
             self.x_combo.addItems(self.active_dataX.columns.tolist())
             self.y_combo.addItems(self.active_dataX.columns.tolist())
         except:
@@ -144,8 +149,9 @@ class DatasetChooser(QWidget):
 
 
 class GraphModule(QMainWindow):
-    def __init__(self):
+    def __init__(self, live = False):
         super().__init__()
+        self.live = live
         self.data_set = []
         self.setWindowTitle("Module")
         self.setGeometry(100, 100, 300, 200)
@@ -173,7 +179,7 @@ class GraphModule(QMainWindow):
         plot_layout.addWidget(self.plot_widget)
         self.layout.addWidget(graph_widget)
 
-        setChooser = DatasetChooser(self.central_widget, self.plot_widget)
+        setChooser = DatasetChooser(self.central_widget, self.plot_widget, self.live)
         sidebox, sidebox1 = setChooser.get_scroll_areas()
         self.data_set.append(setChooser)
         sideBoxLayout.addLayout(sidebox)

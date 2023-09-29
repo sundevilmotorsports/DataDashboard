@@ -47,6 +47,10 @@ class CustomDashboard(QMainWindow):
         self.velocity_module_button.setMaximumWidth(200)
         self.velocity_module_button.clicked.connect(self.create_velocity_module)
 
+        self.live_button = QPushButton("Add Live Module")
+        self.live_button.setMaximumWidth(200)
+        self.live_button.clicked.connect(self.create_live_module)
+
         self.add_csv_button = QPushButton("Add CSV File")
         self.add_csv_button.setMaximumWidth(200)
         self.add_csv_button.clicked.connect(self.introduce_csv_importer)
@@ -66,6 +70,7 @@ class CustomDashboard(QMainWindow):
 
         self.toolbar.addWidget(self.camera_module_button)
         self.toolbar.addWidget(self.velocity_module_button)
+        self.toolbar.addWidget(self.live_button)
         self.toolbar.addWidget(self.add_csv_button)
         self.toolbar.addWidget(self.save_dashboard_button)
         self.toolbar.addWidget(self.select_session_button)
@@ -99,6 +104,16 @@ class CustomDashboard(QMainWindow):
         sub_window.setWidget(graph_module)
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
+
+    def create_live_module(self):
+        sub_window = QMdiSubWindow()
+        sub_window.setWindowTitle("Live Module")
+        graph_module = GraphModule(live = True)
+        sub_window.setWidget(graph_module)
+        self.mdi_area.addSubWindow(sub_window)
+        sub_window.show()
+        
+
 
     def introduce_csv_importer(self):
         filename = QFileDialog.getOpenFileName(filter = "CSV Files(*.csv)")
