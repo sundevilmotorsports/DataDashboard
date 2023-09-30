@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
+from datetime import date
 import pandas as pd
 import session as Session
 import session_handler as handler
@@ -28,7 +29,7 @@ class CSVImport(QDialog):
         # session details
         session_details_layout: QVBoxLayout = QVBoxLayout()
         self.edit_name = QLineEdit(filename[filename.rfind("/") + 1:filename.rfind(".")])
-        self.edit_date = QLineEdit("Session Date")
+        self.edit_date = QLineEdit(str(date.today()))
         self.edit_driver = QLineEdit("Driver")
         self.edit_car = QLineEdit("Car")
         self.edit_track = QLineEdit("Track Name")
