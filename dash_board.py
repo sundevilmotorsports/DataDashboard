@@ -135,8 +135,11 @@ class CustomDashboard(QMainWindow):
             data["pos"].append((tab.pos().x(), tab.pos().y()))
             data["size"].append((tab.size().width(), tab.size().height()))
             data["metadata"].append(tab.widget().get_info())
-        pickle.dump(data, open(f"sessions/{datetime.now()}.pkl", "wb"))
-        self.select_session_button.addItem(data["time"].strftime("%m/%d/%Y, %H_%M_%S"))
+        pickle.dump(
+            data,
+            open(f"sessions/{datetime.now().strftime('%m/%d/%Y, %H_%M_%S')}.pkl", "wb"),
+        )
+        self.select_session_button.addItem(data["time"].strftime("%m/%d/%Y, %H:%M:%S"))
         self.sessions.append(data)
 
     def update_session(self):
