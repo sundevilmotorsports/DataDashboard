@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
-from data_chooser import DataChooser
+
 import session_handler as handler
 from graph_module import GraphModule
 import glob
@@ -81,10 +81,11 @@ class CustomDashboard(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
-
+        '''
         self.data_chooser = DataChooser()
         if self.data_chooser.isDataReady():
             self.active_data = self.data_chooser.getCurrentSession().get_dataframe()
+        '''
 
     def create_new_module(self):
         sub_window = QMdiSubWindow()
@@ -137,7 +138,7 @@ class CustomDashboard(QMainWindow):
             data["metadata"].append(tab.widget().get_info())
         pickle.dump(
             data,
-            open(f"sessions/{datetime.now().strftime('%m/%d/%Y, %H_%M_%S')}.pkl", "wb"),
+            open(f"sessions/{datetime.now().strftime('%m-%d-%Y, %H_%M_%S')}.pkl", "wb"),
         )
         self.select_session_button.addItem(data["time"].strftime("%m/%d/%Y, %H:%M:%S"))
         self.sessions.append(data)

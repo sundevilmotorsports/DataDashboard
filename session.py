@@ -15,7 +15,7 @@ class Session():
         return self.logger_metadata
 
 # add a session to the workspace
-def set_session(df, time, lap, lat, lon, name, date, driver, car, track):
+def set_session(df, time, lap, lat, lon, name, date, driver, car, track, gpsfix):
     new_metadata = {
         'Date': [date][0],
         'Driver': [driver][0],
@@ -25,7 +25,8 @@ def set_session(df, time, lap, lat, lon, name, date, driver, car, track):
         'Lap': [lap][0],
         'Time': [time][0],
         'Lon': [lon][0],
-        'Lat': [lat][0]
+        'Lat': [lat][0],
+        'GPS Fix': [gpsfix][0]
     }
     new_session = Session(df, new_metadata)
     with open(f"data/{name}.pkl", "wb") as f:

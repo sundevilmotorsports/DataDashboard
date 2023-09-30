@@ -73,13 +73,6 @@ class DatasetChooser(QWidget):
             self.y_combo.addItems(self.active_dataX.columns.tolist())
         except:
             print("Error setting combo box")
-            
-        '''
-        IMPORTANT: Not all CSVs contain the same data, meaning we need to find/make a parser/organizer to recover the columns/rows from 
-        a csv and be able to show them. One of the issues with this is that some stats in the data frame may not be numerical, so problematic
-
-        One of 
-        '''
 
     def init_combobox(self, xSet, xSelect, ySelect):
         self.x_set.setCurrentText(xSet)
