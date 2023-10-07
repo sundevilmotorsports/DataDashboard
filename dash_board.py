@@ -2,7 +2,6 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
-
 import session_handler as handler
 from graph_module import GraphModule
 import glob
@@ -81,11 +80,6 @@ class CustomDashboard(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
-        '''
-        self.data_chooser = DataChooser()
-        if self.data_chooser.isDataReady():
-            self.active_data = self.data_chooser.getCurrentSession().get_dataframe()
-        '''
 
     def create_new_module(self):
         sub_window = QMdiSubWindow()
