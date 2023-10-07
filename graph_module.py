@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 import session_handler as handler
 import time
+from collapsible_module import Collapsible
 
 matplotlib.use("Qt5Agg")
 
@@ -42,6 +43,9 @@ class DatasetChooser(QWidget):
         self.x_set.currentIndexChanged.connect(self.set_active_data)
 
         trim_layout = QHBoxLayout()
+        self.autofit_widget = QCheckBox("Autofit")
+        self.autofit_widget.stateChanged.connect(self.trim_graph)
+        trim_layout.addWidget(self.autofit_widget)
         trim_layout.addWidget(QLabel("Trim:"))
         self.begin_widget = QLineEdit()
         self.begin_widget.setFixedWidth(50)
@@ -144,8 +148,16 @@ class DatasetChooser(QWidget):
     def trim_graph(self):
         if self.begin_widget.text() == "" or self.end_widget.text() == "":
             return
-        self.begin = float(self.begin_widget.text())
-        self.end = float(self.end_widget.text())
+        if (self.autofit_widget.isChecked()):
+            self.begin = self.active_dataX[self.selected_x].iloc[0]
+            self.end = self.active_dataX[self.selected_x].iloc[-1]
+            self.begin_widget.setDisabled(True)
+            self.end_widget.setDisabled(True)
+        else: 
+            self.begin = float(self.begin_widget.text())
+            self.end = float(self.end_widget.text())
+            self.begin_widget.setEnabled(True)
+            self.end_widget.setEnabled(True)
         self._plot_ref.axes.set_xlim(self.begin, self.end)
         self.plot_widget.draw()
 
@@ -220,8 +232,12 @@ class GraphModule(QMainWindow):
         self.add_dataset_button = QPushButton("Add Dataset", self.central_widget)
         self.add_dataset_button.clicked.connect(self.add_dataset)
         sideBoxLayout.addWidget(self.add_dataset_button)
-        self.layout.addLayout(sideBoxLayout)
 
+        collapsible_container = Collapsible()
+        collapsible_container.setContentLayout(sideBoxLayout)
+        self.layout.addWidget(collapsible_container)
+        #self.layout.addLayout(sideBoxLayout)
+      
         # self.plot_button.clicked.connect(self.plot_graph)
 
     def add_dataset(self):
@@ -233,7 +249,10 @@ class GraphModule(QMainWindow):
         sideBoxLayout.addLayout(sidebox)
         sideBoxLayout.addLayout(sidebox1)
         sideBoxLayout.insertWidget(-1, self.add_dataset_button)
-        self.layout.addLayout(sideBoxLayout)
+        #self.layout.addLayout(sideBoxLayout)
+        collapsible_container = Collapsible()
+        collapsible_container.setContentLayout(sideBoxLayout)
+        self.layout.addWidget(collapsible_container)
 
     def get_info(self):
         info = []
