@@ -7,8 +7,10 @@ import matplotlib
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 import session_handler as handler
-import time
+from matplotlib.widgets import RangeSlider
 from collapsible_module import Collapsible
+from superqt import QRangeSlider
+
 
 matplotlib.use("Qt5Agg")
 
@@ -21,7 +23,9 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 class DatasetChooser(QWidget):
-    def __init__(self, central_widget: QWidget, plot: MplCanvas, live=False):
+    def __init__(
+        self, central_widget: QWidget, plot: MplCanvas, live=False, slider=QRangeSlider
+    ):
         super().__init__()
         self.central_widget = central_widget
         self.plot_widget = plot
@@ -31,7 +35,7 @@ class DatasetChooser(QWidget):
 
         self._plot_ref = None
         self.sidebox.setAlignment(Qt.AlignTop)
-
+        self.slider = slider
         self.x_combo = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
         self.x_combo.currentIndexChanged.connect(self.plot_graph)
@@ -148,16 +152,25 @@ class DatasetChooser(QWidget):
     def trim_graph(self):
         if self.begin_widget.text() == "" or self.end_widget.text() == "":
             return
-        if (self.autofit_widget.isChecked()):
+        if self.autofit_widget.isChecked():
             self.begin = self.active_dataX[self.selected_x].iloc[0]
             self.end = self.active_dataX[self.selected_x].iloc[-1]
             self.begin_widget.setDisabled(True)
             self.end_widget.setDisabled(True)
-        else: 
+        else:
             self.begin = float(self.begin_widget.text())
             self.end = float(self.end_widget.text())
             self.begin_widget.setEnabled(True)
             self.end_widget.setEnabled(True)
+        self.slider.applyMacStylePatch()
+        self.slider.setValue((self.begin, self.end))
+        self.slider._valuesChanged.connect(self.trim_graph_slider)
+        self._plot_ref.axes.set_xlim(self.begin, self.end)
+        self.plot_widget.draw()
+
+    def trim_graph_slider(self, value):
+        self.begin = value[0]
+        self.end = value[1]
         self._plot_ref.axes.set_xlim(self.begin, self.end)
         self.plot_widget.draw()
 
@@ -185,6 +198,7 @@ class DatasetChooser(QWidget):
             self.plot_widget.axes.grid()
             self.plot_widget.axes.legend()
             self.plot_widget.axes.set_xlim(self.begin, self.end)
+            self.trim_graph()
             self.plot_widget.draw()
         except:
             print("Error plotting graph")
@@ -212,18 +226,20 @@ class GraphModule(QMainWindow):
 
         self.layout = QHBoxLayout(self.central_widget)
         sideBoxLayout = QVBoxLayout()
-
         graph_widget = QWidget()
         self.plot_widget = MplCanvas()
 
         toolbar = NavigationToolbar(self.plot_widget, self)
-
+        self.slider = QRangeSlider(Qt.Orientation.Horizontal)
         plot_layout = QVBoxLayout(graph_widget)
         plot_layout.addWidget(toolbar)
         plot_layout.addWidget(self.plot_widget)
+        plot_layout.addWidget(self.slider)
         self.layout.addWidget(graph_widget)
 
-        setChooser = DatasetChooser(self.central_widget, self.plot_widget, self.live)
+        setChooser = DatasetChooser(
+            self.central_widget, self.plot_widget, self.live, self.slider
+        )
         sidebox, sidebox1 = setChooser.get_scroll_areas()
         self.data_set.append(setChooser)
         sideBoxLayout.addLayout(sidebox)
@@ -236,8 +252,8 @@ class GraphModule(QMainWindow):
         collapsible_container = Collapsible()
         collapsible_container.setContentLayout(sideBoxLayout)
         self.layout.addWidget(collapsible_container)
-        #self.layout.addLayout(sideBoxLayout)
-      
+        # self.layout.addLayout(sideBoxLayout)
+
         # self.plot_button.clicked.connect(self.plot_graph)
 
     def add_dataset(self):
@@ -249,7 +265,7 @@ class GraphModule(QMainWindow):
         sideBoxLayout.addLayout(sidebox)
         sideBoxLayout.addLayout(sidebox1)
         sideBoxLayout.insertWidget(-1, self.add_dataset_button)
-        #self.layout.addLayout(sideBoxLayout)
+        # self.layout.addLayout(sideBoxLayout)
         collapsible_container = Collapsible()
         collapsible_container.setContentLayout(sideBoxLayout)
         self.layout.addWidget(collapsible_container)
