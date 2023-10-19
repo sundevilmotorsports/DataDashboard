@@ -4,6 +4,7 @@ from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
 import session_handler as handler
 from graph_module import GraphModule
+from video_module import VideoPlayer
 import glob
 import pickle
 from datetime import datetime
@@ -89,9 +90,13 @@ class CustomDashboard(QMainWindow):
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 
-    def create_camera_module():
-        # create camera module
-        pass
+    def create_camera_module(self):
+        sub_window = QMdiSubWindow()
+        camera_module = VideoPlayer()
+        camera_module.setWindowIcon(QIcon("90129757.jpg"))
+        sub_window.setWidget(camera_module)
+        self.mdi_area.addSubWindow(sub_window)
+        sub_window.show()
 
     def create_velocity_module(self):
         # create velo module

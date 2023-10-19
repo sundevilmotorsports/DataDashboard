@@ -162,9 +162,12 @@ class DatasetChooser(QWidget):
             self.end = float(self.end_widget.text())
             self.begin_widget.setEnabled(True)
             self.end_widget.setEnabled(True)
-        self.slider.applyMacStylePatch()
-        self.slider.setValue((self.begin, self.end))
-        self.slider._valuesChanged.connect(self.trim_graph_slider)
+        try:
+            self.slider.applyMacStylePatch()
+            self.slider.setValue((self.begin, self.end))
+            self.slider._valuesChanged.connect(self.trim_graph_slider)
+        except:
+            pass
         self._plot_ref.axes.set_xlim(self.begin, self.end)
         self.plot_widget.draw()
 
