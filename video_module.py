@@ -5,13 +5,15 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPu
 from PyQt5.QtWidgets import QStatusBar, QFileDialog
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtGui import QIcon
+import math
 
 class VideoPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("PyQt Video Player")
-        self.setGeometry(100, 100, 300, 200)
+        """self.setFixedWidth(250)
+        self.setFixedHeight(250)"""
         self.setWindowIcon(QIcon("90129757.jpg"))
 
         self.central_widget = QWidget(self)
@@ -30,6 +32,7 @@ class VideoPlayer(QMainWindow):
 
         self.open_button = QPushButton("Open Video")
         self.play_button = QPushButton("Play")
+        #self.open_button.setGeometry(0,0,500,100)
         self.slider = QSlider(Qt.Horizontal)
         self.status_bar = QStatusBar()
 
@@ -67,6 +70,7 @@ class VideoPlayer(QMainWindow):
             self.media_player.setMedia(media)
             self.play_button.setEnabled(True)
             self.slider.setEnabled(True)
+            #self.video_widget.resize(500,500)
             #self.status_bar.showMessage(file_name)
 
     def play(self):
@@ -91,13 +95,13 @@ class VideoPlayer(QMainWindow):
         self.media_player.setPosition(position)
 
     def updateTimestampLabel(self):
-        self.timestamp.setText(str(self.media_player.position()))
+        self.timestamp.setText(str(int(self.media_player.position()/3600000))  + ":" + str(int(self.media_player.position()/60000)%60).zfill(2) + ":" + str(math.ceil(self.media_player.position()/1000)%60).zfill(2))
 
-if __name__ == '__main__':
+"""if __name__ == '__main__':
     app = QApplication(sys.argv)
     player = VideoPlayer()
     player.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec_())"""
 
 
 
