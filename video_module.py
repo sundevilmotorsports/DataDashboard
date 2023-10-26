@@ -10,7 +10,6 @@ import math
 class VideoPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
-
         self.setWindowTitle("PyQt Video Player")
         """self.setFixedWidth(250)
         self.setFixedHeight(250)"""

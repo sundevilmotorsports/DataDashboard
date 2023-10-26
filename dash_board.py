@@ -37,7 +37,12 @@ class CustomDashboard(QMainWindow):
 
         self.layout = QVBoxLayout()
         self.toolbar = QHBoxLayout()
+        self.footer = QStatusBar()
         self.layout.addLayout(self.toolbar)
+        self.setStatusBar(self.footer)
+        self.b = QPushButton("click here")
+
+        self.footer.addWidget(self.b)
 
         self.camera_module_button = QPushButton("Add Camera", self)
         self.camera_module_button.setMaximumWidth(200)
