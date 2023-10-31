@@ -2,14 +2,16 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg,
     NavigationToolbar2QT as NavigationToolbar,
 )
+from matplotlib.backend_bases import MouseButton
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import matplotlib
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 import session_handler as handler
 from matplotlib.widgets import RangeSlider
 from collapsible_module import Collapsible
-from superqt import QRangeSlider
+#from superqt import QRangeSlider
 
 
 matplotlib.use("Qt5Agg")
@@ -17,25 +19,37 @@ matplotlib.use("Qt5Agg")
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None):
-        fig = Figure()
-        self.axes = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
+        self.fig = Figure()
+        self.axes = self.fig.add_subplot(111)
+        super(MplCanvas, self).__init__(self.fig)
+        self.binding_id = self.fig.canvas.mpl_connect('motion_notify_event', self.on_move)
+        self.fig.canvas.mpl_connect('button_press_event', self.on_click)
+        
+    def on_move(self, event):
+        if event.inaxes:
+            print(f'data coords {event.xdata} {event.ydata},',
+                f'pixel coords {event.x} {event.y}')
 
+    def on_click(self, event):
+        if event.button is MouseButton.LEFT:
+            print('disconnecting callback')
+            self.fig.canvas.mpl_disconnect(self.binding_id)
 
 class DatasetChooser(QWidget):
     def __init__(
-        self, central_widget: QWidget, plot: MplCanvas, live=False, slider=QRangeSlider
+        self, central_widget: QWidget, plot: MplCanvas, live=False
     ):
         super().__init__()
+        
         self.central_widget = central_widget
         self.plot_widget = plot
         self.live = live
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
+        
 
         self._plot_ref = None
         self.sidebox.setAlignment(Qt.AlignTop)
-        #self.slider = slider
         self.x_combo = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
         self.x_combo.currentIndexChanged.connect(self.plot_graph)
@@ -75,7 +89,7 @@ class DatasetChooser(QWidget):
         # self.central_widget
 
         self.sidebox2.setAlignment(Qt.AlignTop)
-
+    
     def clear_layout(self, layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -162,12 +176,6 @@ class DatasetChooser(QWidget):
             self.end = float(self.end_widget.text())
             self.begin_widget.setEnabled(True)
             self.end_widget.setEnabled(True)
-        """try:
-            self.slider.applyMacStylePatch()
-            self.slider.setValue((self.begin, self.end))
-            self.slider._valuesChanged.connect(self.trim_graph_slider)
-        except:
-            pass"""
         self._plot_ref.axes.set_xlim(self.begin, self.end)
         self.plot_widget.draw()
 
@@ -233,15 +241,13 @@ class GraphModule(QMainWindow):
         self.plot_widget = MplCanvas()
 
         toolbar = NavigationToolbar(self.plot_widget, self)
-        #self.slider = QRangeSlider(Qt.Orientation.Horizontal)
         plot_layout = QVBoxLayout(graph_widget)
         plot_layout.addWidget(toolbar)
         plot_layout.addWidget(self.plot_widget)
-        #plot_layout.addWidget(self.slider)
         self.layout.addWidget(graph_widget)
 
         setChooser = DatasetChooser(
-            self.central_widget, self.plot_widget, self.live, """self.slider"""
+            self.central_widget, self.plot_widget, self.live
         )
         sidebox, sidebox1 = setChooser.get_scroll_areas()
         self.data_set.append(setChooser)
