@@ -22,18 +22,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
         super(MplCanvas, self).__init__(self.fig)
-        self.binding_id = self.fig.canvas.mpl_connect('motion_notify_event', self.on_move)
-        self.fig.canvas.mpl_connect('button_press_event', self.on_click)
         
-    def on_move(self, event):
-        if event.inaxes:
-            print(f'data coords {event.xdata} {event.ydata},',
-                f'pixel coords {event.x} {event.y}')
-
-    def on_click(self, event):
-        if event.button is MouseButton.LEFT:
-            print('disconnecting callback')
-            self.fig.canvas.mpl_disconnect(self.binding_id)
 
 class DatasetChooser(QWidget):
     def __init__(
@@ -47,6 +36,8 @@ class DatasetChooser(QWidget):
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
         
+        self.binding_id = self.plot_widget.fig.canvas.mpl_connect('motion_notify_event', self.on_move)
+        self.plot_widget.fig.canvas.mpl_connect('button_press_event', self.on_click)
 
         self._plot_ref = None
         self.sidebox.setAlignment(Qt.AlignTop)
@@ -54,6 +45,10 @@ class DatasetChooser(QWidget):
         self.y_combo = QComboBox(self.central_widget)
         self.x_combo.currentIndexChanged.connect(self.plot_graph)
         self.y_combo.currentIndexChanged.connect(self.plot_graph)
+
+        
+        
+        
 
         # creating dropdowns and updating dataset when changed
         self.x_set = QComboBox(self.central_widget)
@@ -90,6 +85,16 @@ class DatasetChooser(QWidget):
 
         self.sidebox2.setAlignment(Qt.AlignTop)
     
+    def on_move(self, event):
+            if event.inaxes:
+                print(f'data coords {event.xdata} {event.ydata},',
+                    f'pixel coords {event.x} {event.y}')
+
+    def on_click(self, event):
+        if event.button is MouseButton.LEFT:
+            print('disconnecting callback')
+            self.plot_widget.fig.canvas.mpl_disconnect(self.binding_id)
+
     def clear_layout(self, layout):
         while layout.count():
             item = layout.takeAt(0)
