@@ -6,6 +6,7 @@ from matplotlib.backends.backend_qt5agg import (
 from matplotlib.backend_bases import MouseButton
 from matplotlib.figure import Figure
 import matplotlib.pyplot
+import matplotlib.animation as animation
 import matplotlib
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
@@ -42,11 +43,7 @@ class DatasetChooser(QWidget):
 
         timestamper.bind_to(self.redraw_graph)
 
-        self.binding_id = self.plot_widget.fig.canvas.mpl_connect(
-            "motion_notify_event", self.on_move
-        )
         self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
-        self.plot_widget.fig.canvas.mpl_connect("button_release_event", self.on_release)
 
         self._plot_ref = None
         self.counter = 0
@@ -54,6 +51,7 @@ class DatasetChooser(QWidget):
         self.moved = False
         self.left = False
         self.drag = [-1, -1]
+
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
@@ -95,35 +93,12 @@ class DatasetChooser(QWidget):
 
         self.sidebox2.setAlignment(Qt.AlignTop)
 
-    def on_move(self, event):
-        self.counter += 1
-        # Counter keeps it from stuttering, still makes it chopy but not a noticeable ammount
-        if self.counter == 5:
-            self.counter = 0
-            # Checking if mouse is being held down
-            if self.clicked:
-                self.moved = True
-                if self.drag[0] < 0:
-                    self.drag[0] = event.x
-                    self.drag[1] = event.y
-                else:
-                    self.slide_graph(self.drag[0] - event.x, self.drag[1] - event.y)
-                    self.drag[0] = event.x
-                    self.drag[1] = event.y
-            return
-
     def on_click(self, event):
-        if event.button is MouseButton.LEFT:
-            self.left = True
-        self.clicked = True
-
-    def on_release(self, event):
-        self.clicked = False
-        if not self.moved:
+        if event.dblclick:
+            if event.button is MouseButton.LEFT:
+                self.left = True
             self.click_trim()
-        self.moved = False
-        self.drag = [-1, -1]
-        self.left = False
+            self.left = False
 
     def clear_layout(self, layout):
         while layout.count():
@@ -242,43 +217,6 @@ class DatasetChooser(QWidget):
         )
         self.plot_widget.draw()
 
-    def slide_graph(self, deltaX, deltaY):
-        if (
-            self.begin_widget.text() == ""
-            or self.end_widget.text() == ""
-            or self.autofit_widget.isChecked()
-        ):
-            return
-
-        scaler = (
-            (float(self.end_widget.text()) - float(self.begin_widget.text()))
-            / float(self.end_widget.text())
-            * 20
-        )
-
-        self.begin_widget.setText(str(int(self.begin_widget.text()) + deltaX * scaler))
-        self.end_widget.setText(str(int(self.end_widget.text()) + deltaX * scaler))
-        self._plot_ref.axes.set_xlim(
-            float(self.begin_widget.text()), float(self.end_widget.text())
-        )
-        self.plot_widget.draw()
-
-    """def trim_graph_slider(self, value):
-        self.begin = value[0]
-        self.end = value[1]
-        self._plot_ref.axes.set_xlim(self.begin, self.end)
-        self.plot_widget.draw()"""
-
-    def redraw_graph(self, timestamp=610):
-        try:
-            print(self._plot_ref.axes)
-            self._plot_ref.axes.clear()
-            # change hardcoded value to timestamp
-            self._plot_ref.axes.set_xlim(0, timestamp)
-            self.plot_widget.draw()
-        except Exception as e:
-            print("Error plotting graph" + str(e))
-
     def plot_graph(self):
         try:
             self.selected_x = self.x_combo.currentText()
@@ -307,6 +245,18 @@ class DatasetChooser(QWidget):
             self.plot_widget.draw()
         except Exception as e:
             print("Error plotting graph" + str(e))
+
+    def redraw_graph(self, timestamp=610):
+        try:
+            activeX = self.active_dataX[(self.active_dataX["Time (s)"] >= 0 and self.active_dataX["Time (s)"] <= timestamp)][[self.selected_x,self.selected_y]].to_numpy()
+            animation.FuncAnimation(self._plot_ref, self.animate, frames = activeX, interval = 10, repeat = False)
+            
+        except Exception as e:
+            print("Error plotting graph" + str(e))
+
+    def animate(self, cords):
+        pass
+
 
     def get_info(self):
         return self.x_set.currentText(), self.selected_x, self.selected_y
