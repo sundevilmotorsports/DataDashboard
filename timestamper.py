@@ -1,6 +1,9 @@
+import time
+
+
 class TimeStamper:
     def __init__(self):
-        self.time_stamp = 0
+        self.time_stamp = 630
         self._observers = []
 
     @property
@@ -9,10 +12,10 @@ class TimeStamper:
 
     @timestamp.setter
     def timestamp(self, value):
-        self.timestamp = value
+        self.time_stamp = value
         for callback in self._observers:
+            callback(timestamp=self.time_stamp)
             print("announcing change")
-            callback(self._global_wealth)
 
     def bind_to(self, callback):
         print("bound")

@@ -10,7 +10,7 @@ class CSVImport(QDialog):
     def __init__(self, filename: str):
         super().__init__()
 
-        self.df : pd.DataFrame = pd.read_csv(filename)
+        self.df: pd.DataFrame = pd.read_csv(filename)
 
         columns = list(self.df.columns)
 
@@ -24,11 +24,13 @@ class CSVImport(QDialog):
         self.combo_time = QComboBox()
         self.combo_lap = QComboBox()
         self.combo_lat = QComboBox()
-        self.combo_lon = QComboBox()        
+        self.combo_lon = QComboBox()
 
         # session details
         session_details_layout: QVBoxLayout = QVBoxLayout()
-        self.edit_name = QLineEdit(filename[filename.rfind("/") + 1:filename.rfind(".")])
+        self.edit_name = QLineEdit(
+            filename[filename.rfind("/") + 1 : filename.rfind(".")]
+        )
         self.edit_date = QLineEdit(str(date.today()))
         self.edit_driver = QLineEdit("Driver")
         self.edit_car = QLineEdit("Car")
@@ -51,12 +53,20 @@ class CSVImport(QDialog):
         mgmt_layout.addWidget(self.btn_cancel)
         mgmt_layout.addWidget(self.btn_import)
 
-        #self.layout.addLayout(col_select_layout)
+        # self.layout.addLayout(col_select_layout)
         self.layout.addLayout(session_details_layout)
         self.layout.addLayout(mgmt_layout)
 
     def cancel(self):
         self.done(0)
+
+    def find_gps_fix(self):
+        ts = 0
+        # for index, row in self.df.iterrows():
+        #     if row["longitude"] != 0:
+        #         ts = row["timestamp (s)"]
+        #         break
+        return ts
 
     def accept(self):
         time_idx = self.combo_time.currentText()
@@ -69,26 +79,26 @@ class CSVImport(QDialog):
         driver = self.edit_driver.text()
         car = self.edit_car.text()
         track = self.edit_track.text()
-        #print("Is checked: " + str(self.live.isChecked()))
-        new_session = Session.set_session(self.df, time_idx, lap_idx, lat_idx, lon_idx, name, date, driver, car, track, find_gps_fix())
+        # print("Is checked: " + str(self.live.isChecked()))
+        new_session = Session.set_session(
+            self.df,
+            time_idx,
+            lap_idx,
+            lat_idx,
+            lon_idx,
+            name,
+            date,
+            driver,
+            car,
+            track,
+            self.find_gps_fix(),
+        )
         handler.add_session(new_session, self.live.isChecked())
-
 
         self.done(1)
         self.hide()
 
-
-    def find_gps_fix():
-        ts = 0
-        for index, row in self.df.iterrows():
-            if (row["longitude"] != 0):
-                ts = row["timestamp (s)"]
-                break
-        return ts
-
-
-
-        '''
+        """
         gps = []
         useful = []
         sus = []
@@ -172,11 +182,4 @@ class CSVImport(QDialog):
 
         print("\nruns with lat accel > 100 mG:")
         print(lat)
-        '''
-
-
-
-
-
-
-
+        """

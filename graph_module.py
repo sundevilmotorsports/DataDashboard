@@ -1,4 +1,4 @@
-import math
+import time
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg,
     NavigationToolbar2QT as NavigationToolbar,
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 import session_handler as handler
 from collapsible_module import Collapsible
-
+from timestamper import TimeStamper
 
 
 matplotlib.use("Qt5Agg")
@@ -22,39 +22,43 @@ class MplCanvas(FigureCanvasQTAgg):
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
         super(MplCanvas, self).__init__(self.fig)
-        
+
 
 class DatasetChooser(QWidget):
     def __init__(
-        self, central_widget: QWidget, plot: MplCanvas, live=False
+        self,
+        central_widget: QWidget,
+        plot: MplCanvas,
+        timestamper: TimeStamper,
+        live=False,
     ):
         super().__init__()
-        
+
         self.central_widget = central_widget
         self.plot_widget = plot
         self.live = live
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
-        
-        self.binding_id = self.plot_widget.fig.canvas.mpl_connect('motion_notify_event', self.on_move)
-        self.plot_widget.fig.canvas.mpl_connect('button_press_event', self.on_click)
-        self.plot_widget.fig.canvas.mpl_connect('button_release_event', self.on_release)
+
+        timestamper.bind_to(self.redraw_graph)
+
+        self.binding_id = self.plot_widget.fig.canvas.mpl_connect(
+            "motion_notify_event", self.on_move
+        )
+        self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
+        self.plot_widget.fig.canvas.mpl_connect("button_release_event", self.on_release)
 
         self._plot_ref = None
         self.counter = 0
         self.clicked = False
         self.moved = False
         self.left = False
-        self.drag = [-1,-1]
+        self.drag = [-1, -1]
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
         self.x_combo.currentIndexChanged.connect(self.plot_graph)
         self.y_combo.currentIndexChanged.connect(self.plot_graph)
-
-        
-        
-        
 
         # creating dropdowns and updating dataset when changed
         self.x_set = QComboBox(self.central_widget)
@@ -90,20 +94,20 @@ class DatasetChooser(QWidget):
         # self.central_widget
 
         self.sidebox2.setAlignment(Qt.AlignTop)
-    
+
     def on_move(self, event):
         self.counter += 1
-        #Counter keeps it from stuttering, still makes it chopy but not a noticeable ammount
+        # Counter keeps it from stuttering, still makes it chopy but not a noticeable ammount
         if self.counter == 5:
             self.counter = 0
-            #Checking if mouse is being held down
-            if(self.clicked):
+            # Checking if mouse is being held down
+            if self.clicked:
                 self.moved = True
                 if self.drag[0] < 0:
                     self.drag[0] = event.x
-                    self.drag[1] = event.y 
+                    self.drag[1] = event.y
                 else:
-                    self.slide_graph(self.drag[0] - event.x, self.drag[1]-event.y)
+                    self.slide_graph(self.drag[0] - event.x, self.drag[1] - event.y)
                     self.drag[0] = event.x
                     self.drag[1] = event.y
             return
@@ -118,10 +122,9 @@ class DatasetChooser(QWidget):
         if not self.moved:
             self.click_trim()
         self.moved = False
-        self.drag = [-1,-1]
+        self.drag = [-1, -1]
         self.left = False
 
-    
     def clear_layout(self, layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -215,30 +218,49 @@ class DatasetChooser(QWidget):
         self.plot_widget.draw()
 
     def click_trim(self):
-        if self.begin_widget.text() == "" or self.end_widget.text() == "" or self.autofit_widget.isChecked():
+        if (
+            self.begin_widget.text() == ""
+            or self.end_widget.text() == ""
+            or self.autofit_widget.isChecked()
+        ):
             return
-        
-        if(self.left):
+
+        if self.left:
             adjustment = round(int(self.end_widget.text()) * 0.1)
         else:
             adjustment = round(int(self.end_widget.text()) * 0.1) * -1
 
-        if not int(self.begin_widget.text()) + adjustment >= int(self.end_widget.text())- adjustment:
+        if (
+            not int(self.begin_widget.text()) + adjustment
+            >= int(self.end_widget.text()) - adjustment
+        ):
             self.begin_widget.setText(str(int(self.begin_widget.text()) + adjustment))
-            self.end_widget.setText(str(int(self.end_widget.text())- adjustment))
+            self.end_widget.setText(str(int(self.end_widget.text()) - adjustment))
 
-        self._plot_ref.axes.set_xlim(float(self.begin_widget.text()), float(self.end_widget.text()))
+        self._plot_ref.axes.set_xlim(
+            float(self.begin_widget.text()), float(self.end_widget.text())
+        )
         self.plot_widget.draw()
-        
+
     def slide_graph(self, deltaX, deltaY):
-        if self.begin_widget.text() == "" or self.end_widget.text() == "" or self.autofit_widget.isChecked():
+        if (
+            self.begin_widget.text() == ""
+            or self.end_widget.text() == ""
+            or self.autofit_widget.isChecked()
+        ):
             return
-        
-        scaler = (float(self.end_widget.text()) - float(self.begin_widget.text()))/float(self.end_widget.text()) * 20
+
+        scaler = (
+            (float(self.end_widget.text()) - float(self.begin_widget.text()))
+            / float(self.end_widget.text())
+            * 20
+        )
 
         self.begin_widget.setText(str(int(self.begin_widget.text()) + deltaX * scaler))
         self.end_widget.setText(str(int(self.end_widget.text()) + deltaX * scaler))
-        self._plot_ref.axes.set_xlim(float(self.begin_widget.text()), float(self.end_widget.text()))
+        self._plot_ref.axes.set_xlim(
+            float(self.begin_widget.text()), float(self.end_widget.text())
+        )
         self.plot_widget.draw()
 
     """def trim_graph_slider(self, value):
@@ -246,6 +268,16 @@ class DatasetChooser(QWidget):
         self.end = value[1]
         self._plot_ref.axes.set_xlim(self.begin, self.end)
         self.plot_widget.draw()"""
+
+    def redraw_graph(self, timestamp=610):
+        try:
+            print(self._plot_ref.axes)
+            self._plot_ref.axes.clear()
+            # change hardcoded value to timestamp
+            self._plot_ref.axes.set_xlim(0, timestamp)
+            self.plot_widget.draw()
+        except Exception as e:
+            print("Error plotting graph" + str(e))
 
     def plot_graph(self):
         try:
@@ -273,15 +305,15 @@ class DatasetChooser(QWidget):
             self.plot_widget.axes.set_xlim(self.begin, self.end)
             self.trim_graph()
             self.plot_widget.draw()
-        except:
-            print("Error plotting graph")
+        except Exception as e:
+            print("Error plotting graph" + str(e))
 
     def get_info(self):
         return self.x_set.currentText(), self.selected_x, self.selected_y
 
 
 class GraphModule(QMainWindow):
-    def __init__(self, live=False):
+    def __init__(self, live=False, timestamper=None):
         super().__init__()
         self.live = live
         self.data_set = []
@@ -309,7 +341,7 @@ class GraphModule(QMainWindow):
         self.layout.addWidget(graph_widget)
 
         setChooser = DatasetChooser(
-            self.central_widget, self.plot_widget, self.live
+            self.central_widget, self.plot_widget, timestamper, self.live
         )
         sidebox, sidebox1 = setChooser.get_scroll_areas()
         self.data_set.append(setChooser)

@@ -7,8 +7,10 @@ from graph_module import GraphModule
 from video_module import VideoPlayer
 import glob
 import pickle
+from timestamper import TimeStamper
 from datetime import datetime
 from PyQt5.QtCore import Qt
+import time
 
 
 class CustomDashboard(QMainWindow):
@@ -25,6 +27,8 @@ class CustomDashboard(QMainWindow):
             data = pickle.load(open(file, "rb"))
             handler.add_session(data)
 
+        self.timestamper = TimeStamper()
+
         self.setWindowTitle("Sun Devil Motorsports Data Dashboard")
         self.setWindowIcon(QIcon("90129757.jpg"))
         self.setGeometry(100, 100, 1800, 900)
@@ -40,7 +44,8 @@ class CustomDashboard(QMainWindow):
         self.footer = QStatusBar()
         self.layout.addLayout(self.toolbar)
         self.setStatusBar(self.footer)
-        self.b = QPushButton("click here")
+        self.b = QPushButton("Play")
+        self.b.clicked.connect(self.start)
 
         self.footer.addWidget(self.b)
 
@@ -87,17 +92,22 @@ class CustomDashboard(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
 
-    def create_new_module(self):
-        sub_window = QMdiSubWindow()
-        graph_module = GraphModule()
-        self.graph_module.setWindowIcon(QIcon("90129757.jpg"))
-        sub_window.setWidget(graph_module)
-        self.mdi_area.addSubWindow(sub_window)
-        sub_window.show()
+    # def create_new_module(self):
+    #     sub_window = QMdiSubWindow()
+    #     graph_module = GraphModule(self.timestamper)
+    #     self.graph_module.setWindowIcon(QIcon("90129757.jpg"))
+    #     sub_window.setWidget(graph_module)
+    #     self.mdi_area.addSubWindow(sub_window)
+    #     sub_window.show()
+
+    def start(self):
+        while self.timestamper.timestamp < 700:
+            self.timestamper.timestamp += 5
+            time.sleep(1)
 
     def create_camera_module(self):
         sub_window = QMdiSubWindow()
-        camera_module = VideoPlayer()
+        camera_module = VideoPlayer(timestamper=self.timestamper)
         camera_module.setWindowIcon(QIcon("90129757.jpg"))
         sub_window.setWidget(camera_module)
         self.mdi_area.addSubWindow(sub_window)
@@ -106,7 +116,7 @@ class CustomDashboard(QMainWindow):
     def create_velocity_module(self):
         # create velo module
         sub_window = QMdiSubWindow()
-        graph_module = GraphModule()
+        graph_module = GraphModule(timestamper=self.timestamper)
         sub_window.setWidget(graph_module)
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
