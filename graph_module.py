@@ -5,7 +5,7 @@ from matplotlib.backends.backend_qt5agg import (
 )
 from matplotlib.backend_bases import MouseButton
 from matplotlib.figure import Figure
-import matplotlib.pyplot
+import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
 from PyQt5.QtWidgets import *
@@ -19,9 +19,10 @@ matplotlib.use("Qt5Agg")
 
 
 class MplCanvas(FigureCanvasQTAgg):
+    activeXY = [[],[]]
     def __init__(self, parent=None):
         self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
+        self.ax1 = self.fig.add_subplot(111)
         super(MplCanvas, self).__init__(self.fig)
 
 
@@ -46,11 +47,7 @@ class DatasetChooser(QWidget):
         self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
 
         self._plot_ref = None
-        self.counter = 0
-        self.clicked = False
-        self.moved = False
         self.left = False
-        self.drag = [-1, -1]
 
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
@@ -224,7 +221,7 @@ class DatasetChooser(QWidget):
             self.x_data = self.active_dataX[self.selected_x]
             self.y_data = self.active_dataX[self.selected_y]
             if self._plot_ref is None:
-                plotrefs = self.plot_widget.axes.plot(
+                plotrefs = self.plot_widget.ax1.plot(
                     self.x_data, self.y_data, label=self.x_set.currentText()
                 )
                 self._plot_ref = plotrefs[0]
@@ -232,30 +229,39 @@ class DatasetChooser(QWidget):
             else:
                 self._plot_ref.set_data(self.x_data, self.y_data)
                 self._plot_ref.set_label(self.x_set.currentText())
-                self.plot_widget.axes.relim()
-                self.plot_widget.axes.autoscale()
-                self.plot_widget.axes.autoscale()
-            self.plot_widget.axes.set_xlabel(self.selected_x)
-            self.plot_widget.axes.set_ylabel(self.selected_y)
-            self.plot_widget.axes.set_title(self.selected_x + " vs " + self.selected_y)
-            self.plot_widget.axes.grid()
-            self.plot_widget.axes.legend()
-            self.plot_widget.axes.set_xlim(self.begin, self.end)
+                self.plot_widget.ax1.relim()
+                self.plot_widget.ax1.autoscale()
+                self.plot_widget.ax1.autoscale()
+            self.plot_widget.ax1.set_xlabel(self.selected_x)
+            self.plot_widget.ax1.set_ylabel(self.selected_y)
+            self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
+            self.plot_widget.ax1.grid()
+            self.plot_widget.ax1.legend()
+            self.plot_widget.ax1.set_xlim(self.begin, self.end)
             self.trim_graph()
             self.plot_widget.draw()
         except Exception as e:
-            print("Error plotting graph" + str(e))
+            print("Error plotting graph: " + str(e))
 
-    def redraw_graph(self, timestamp=610):
+    def redraw_graph(self, timestamp=614):
         try:
-            activeX = self.active_dataX[(self.active_dataX["Time (s)"] >= 0 and self.active_dataX["Time (s)"] <= timestamp)][[self.selected_x,self.selected_y]].to_numpy()
-            animation.FuncAnimation(self._plot_ref, self.animate, frames = activeX, interval = 10, repeat = False)
+            activeXY = self.active_dataX[(self.active_dataX["Time (s)"] >= 0) & (self.active_dataX["Time (s)"] >= timestamp)][[self.selected_x, self.selected_y]].to_numpy()
+            ani = animation.FuncAnimation(self.plot_widget.fig, self.animate, frames = activeXY, interval = 10, repeat = False)
+            self.plot_widget.draw()
             
         except Exception as e:
-            print("Error plotting graph" + str(e))
+            print("Error re-drawing graph: " + str(e))
 
     def animate(self, cords):
-        pass
+        self.plot_widget.activeXY[0].append(cords[0])
+        self.plot_widget.activeXY[1].append(cords[1])
+        print(len(self.plot_widget.activeXY[0]))
+        self.plot_widget.ax1.clear()
+        self.plot_widget.ax1.plot(self.plot_widget.activeXY[0], self.plot_widget.activeXY[1]) 
+        self.plot_widget.ax1.set_xlabel(self.selected_x)
+        self.plot_widget.ax1.set_ylabel(self.selected_y)
+        self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
+        self.plot_widget.ax1.grid()      
 
 
     def get_info(self):

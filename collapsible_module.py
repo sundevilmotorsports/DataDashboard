@@ -35,7 +35,7 @@ class Collapsible(QWidget):
         self.contentArea.setMaximumWidth(0)
         self.contentArea.setMinimumHeight(0)
         self.contentArea.setMinimumWidth(10)
-        self.contentArea.hide()
+        #self.contentArea.hide()
 
         for _ in range(3):
             self.toggleAnimation.addAnimation(QPropertyAnimation(self, b"minimumWidth"))

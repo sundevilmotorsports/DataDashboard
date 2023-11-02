@@ -103,7 +103,7 @@ class CustomDashboard(QMainWindow):
     def start(self):
         while self.timestamper.timestamp < 700:
             self.timestamper.timestamp += 5
-            time.sleep(1)
+            #time.sleep(1)
 
     def create_camera_module(self):
         sub_window = QMdiSubWindow()
