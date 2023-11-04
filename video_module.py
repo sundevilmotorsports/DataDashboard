@@ -11,8 +11,7 @@ class VideoPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PyQt Video Player")
-        """self.setFixedWidth(250)
-        self.setFixedHeight(250)"""
+        self.setGeometry(100,100,500,500)
         self.setWindowIcon(QIcon("90129757.jpg"))
 
         self.central_widget = QWidget(self)
@@ -31,7 +30,6 @@ class VideoPlayer(QMainWindow):
 
         self.open_button = QPushButton("Open Video")
         self.play_button = QPushButton("Play")
-        #self.open_button.setGeometry(0,0,500,100)
         self.slider = QSlider(Qt.Horizontal)
         self.status_bar = QStatusBar()
 
@@ -40,7 +38,6 @@ class VideoPlayer(QMainWindow):
         self.control_layout.addWidget(self.slider)
 
         self.layout.addWidget(self.status_bar)
-
 
         self.timestamp = QLabel()
         self.layout.addWidget(self.timestamp)
@@ -73,66 +70,32 @@ class VideoPlayer(QMainWindow):
             #self.status_bar.showMessage(file_name)
 
     def play(self):
+        """Helper to modify if the player is actively playing """
         if self.media_player.state() == QMediaPlayer.PlayingState:
             self.media_player.pause()
         else:
             self.media_player.play()
 
     def mediaStateChanged(self, state):
+        """If media player state changes, change button text to be in line with changes"""
         if self.media_player.state() == QMediaPlayer.PlayingState:
             self.play_button.setText("Pause")
         else:
             self.play_button.setText("Play")
 
     def positionChanged(self, position):
+        """Setter that sets value of slider for video"""
         self.slider.setValue(position)
 
     def durationChanged(self, duration):
+        """Setter for the duration of the video"""
         self.slider.setRange(0, duration)
 
     def setPosition(self, position):
+        """Setter for the media player position in ms"""
         self.media_player.setPosition(position)
 
     def updateTimestampLabel(self):
+        """Sets text content of the timestamp widget to the format: HH:MM:SS"""
         self.timestamp.setText(str(int(self.media_player.position()/3600000))  + ":" + str(int(self.media_player.position()/60000)%60).zfill(2) + ":" + str(math.ceil(self.media_player.position()/1000)%60).zfill(2))
-
-"""if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    player = VideoPlayer()
-    player.show()
-    sys.exit(app.exec_())"""
-
-
-
-'''
-from kivy.lang import Builder
-from kivymd.app import MDApp
-from kivy.uix.videoplayer import VideoPlayer
-
-class Video(MDApp):
-    title = "test video"
-
-    def build(self):
-        self.theme_cls.theme_style = "Dark"
-        self.theme_cls.primary_palette = "BlueGray"
-
-        player = VideoPlayer(source="C:/Users/ryans/Downloads/minions.mp4")
-
-        player.state = "play"
-
-        player.options = {"eos": "pause"}
-
-        player.allow_stretch = True
-
-        return player
-
-if __name__ == "__main__":
-    Video().run()
-'''
-
-
-
-
-
-
 

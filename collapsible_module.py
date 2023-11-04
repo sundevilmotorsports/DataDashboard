@@ -4,6 +4,12 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 
 
 class Collapsible(QWidget):
+    CONTENT_AREA_MAX_HEIGHT = 900
+    CONTENT_AREA_MIN_HEIGHT = 0
+    CONTENT_AREA_MAX_WIDTH = 0
+    CONTENT_AREA_MIN_WIDTH = 0
+    COLLAPSED_WIDTH = 50
+
     def __init__(self, title="", animationDuration=300, parent=None):
         super().__init__(parent)
         self.animationDuration = animationDuration
@@ -16,6 +22,8 @@ class Collapsible(QWidget):
         self.contentArea = QScrollArea()
 
         self.initUI(title)
+
+        
 
     def initUI(self, title):
 
@@ -32,30 +40,19 @@ class Collapsible(QWidget):
 
         self.contentArea.setStyleSheet("QScrollArea { background-color: white; border: none; }")
         self.contentArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.contentArea.setMaximumWidth(0)
-        self.contentArea.setMinimumHeight(0)
-        self.contentArea.setMinimumWidth(10)
+        self.contentArea.setMaximumWidth(self.CONTENT_AREA_MAX_HEIGHT)
+        self.contentArea.setMinimumHeight(self.CONTENT_AREA_MIN_HEIGHT)
+        self.contentArea.setMinimumWidth(self.CONTENT_AREA_MIN_WIDTH)
         self.contentArea.show()
 
         for _ in range(3):
             self.toggleAnimation.addAnimation(QPropertyAnimation(self, b"minimumWidth"))
             self.toggleAnimation.addAnimation(QPropertyAnimation(self, b"maximumWidth"))
-        
-        #self.mainLayout.setSpacing(0)
-        #self.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.mainLayout.addWidget(self.toggleButton)
-        #self.mainLayout.addWidget(self.headerLine)
-        #self.mainLayout.addWidget(self.contentArea)
-        
 
-        #horizontalLayout.addWidget(self.toggleButton)
-        #horizontalLayout.addWidget(self.headerLine)
+        self.mainLayout.addWidget(self.toggleButton)  
         self.horizontalLayout.addWidget(self.contentArea)
         self.mainLayout.addLayout(self.horizontalLayout)
-
         self.setLayout(self.mainLayout)
-        #self.setLayout(horizontalLayout)
-
         self.toggleButton.clicked.connect(self.onToggle)
 
     def setContentLayout(self, contentLayout):
@@ -66,28 +63,25 @@ class Collapsible(QWidget):
         # Set the new content layout
         self.contentArea.setLayout(contentLayout)
         self.contentArea.setMaximumWidth(contentLayout.sizeHint().width())
-        #self.contentArea.setMaximumHeight(contentLayout.sizeHint().height())
-        self.contentArea.setMaximumHeight(900)
+        self.contentArea.setMaximumHeight(self.CONTENT_AREA_MAX_HEIGHT)
         
-        # Rest of the method remains the same
-        #collapsedWidth = self.sizeHint().width() - self.contentArea.maximumWidth()
-        collapsedWidth = 50
-        contentWidth = contentLayout.sizeHint().width()          
+        self.contentWidth = contentLayout.sizeHint().width()          
 
         for i in range(self.toggleAnimation.animationCount() - 1):
             spoilerAnimation = self.toggleAnimation.animationAt(i)
             spoilerAnimation.setDuration(self.animationDuration)
-            spoilerAnimation.setStartValue(collapsedWidth)
-            spoilerAnimation.setEndValue(collapsedWidth + contentWidth)
+            spoilerAnimation.setStartValue(self.COLLAPSED_WIDTH)
+            spoilerAnimation.setEndValue(self.COLLAPSED_WIDTH + self.contentWidth)
 
         contentAnimation = self.toggleAnimation.animationAt(self.toggleAnimation.animationCount() - 1)
         contentAnimation.setDuration(self.animationDuration)
         contentAnimation.setStartValue(0)
-        contentAnimation.setEndValue(contentWidth)
+        contentAnimation.setEndValue(self.contentWidth)
         self.contentArea.update()
 
 
     def onToggle(self):
+        """When called, this function will update the value of the checked boolean, and show the content area accordingly. It starts the animation and sets the animation direction"""
         checked = self.toggleButton.isChecked()
         if (checked):
             self.contentArea.show()

@@ -14,10 +14,14 @@ import session_handler as handler
 from collapsible_module import Collapsible
 from timestamper import TimeStamper
 
+ # ------------------------------
+ # Custom Class for our GraphModule. By inheriting from it, we can create a custom canvas for Matplotlib within the PyQt application.
+ # Line outside the class tells the application that the backend for Matplotlib will use Qt5Agg, 
+ # which is the backend that integrates Matplotlib with the PyQt5 framework. It tells Matplotlib 
+ # to render plots using Qt for the graphical user interface.
+ # ------------------------------
 
 matplotlib.use("Qt5Agg")
-
-
 class MplCanvas(FigureCanvasQTAgg):
     activeXY = [[],[]]
     def __init__(self, parent=None):
@@ -25,7 +29,11 @@ class MplCanvas(FigureCanvasQTAgg):
         self.ax1 = self.fig.add_subplot(111)
         super(MplCanvas, self).__init__(self.fig)
 
-
+# ------------------------------
+# Custom class named DatasetChooser. This is the sidebar that provides functionality to select datasets, 
+# customize data visualization settings, and update and animate graphs using Matplotlib. 
+# It connects various widgets and signals to provide an interactive data visualization experience.
+# ------------------------------
 class DatasetChooser(QWidget):
     def __init__(
         self,
@@ -35,7 +43,6 @@ class DatasetChooser(QWidget):
         live=False,
     ):
         super().__init__()
-
         self.central_widget = central_widget
         self.plot_widget = plot
         self.live = live
@@ -60,6 +67,7 @@ class DatasetChooser(QWidget):
         self.x_set.showEvent = lambda _: self.init_metadata()
         self.x_set.currentIndexChanged.connect(self.set_active_data)
 
+        #creates labels and textboxes for editing graph limits and trims
         trim_layout = QHBoxLayout()
         self.autofit_widget = QCheckBox("Autofit")
         self.autofit_widget.stateChanged.connect(self.trim_graph)
@@ -74,23 +82,21 @@ class DatasetChooser(QWidget):
         self.end_widget.setFixedWidth(50)
         self.end_widget.textChanged.connect(self.trim_graph)
         trim_layout.addWidget(self.end_widget)
-
+        
+        #creates labels and adds comboboxes to select columns in the graph
         self.set_combo_box()
         self.sidebox.addWidget(QLabel("Select Dataset:"))
         self.sidebox.addWidget(self.x_set)
-        # self.sidebox.addWidget(QLabel("")
         self.sidebox.addWidget(QLabel("Select X Axis Column:"))
         self.sidebox.addWidget(self.x_combo)
-        # self.sidebox.addWidget(QLabel(""))
         self.sidebox.addWidget(QLabel("Select Y Axis Column:"))
         self.sidebox.addWidget(self.y_combo)
         self.sidebox.addLayout(trim_layout)
-        # No longer needed, auto ploting
-        # self.central_widget
 
         self.sidebox2.setAlignment(Qt.AlignTop)
-
+    
     def on_click(self, event):
+        """On click function is called during a click, decides if it is a left click, and calls click_trim() to zoom the graph in/out"""
         if event.dblclick:
             if event.button is MouseButton.LEFT:
                 self.left = True
@@ -98,6 +104,7 @@ class DatasetChooser(QWidget):
             self.left = False
 
     def clear_layout(self, layout):
+        """Removes all items from the given layout"""
         while layout.count():
             item = layout.takeAt(0)
             widget = item.widget()
@@ -105,6 +112,7 @@ class DatasetChooser(QWidget):
                 widget.deleteLater()
 
     def set_combo_box(self):
+        """Populates ComboBoxes with all different columns within the active data"""
         try:
             if self.live:
                 names = handler.get_live_names()
@@ -121,22 +129,18 @@ class DatasetChooser(QWidget):
         except:
             print("Error setting combo box")
 
-        """
-        IMPORTANT: Not all CSVs contain the same data, meaning we need to find/make a parser/organizer to recover the columns/rows from 
-        a csv and be able to show them. One of the issues with this is that some stats in the data frame may not be numerical, so problematic
-
-        One of 
-        """
-
     def init_combobox(self, xSet, xSelect, ySelect):
+        """Sets the front-text of comboboxes within the sidebar to the currently selected column within the active dataset"""
         self.x_set.setCurrentText(xSet)
         self.x_combo.setCurrentText(xSelect)
         self.y_combo.setCurrentText(ySelect)
 
     def get_scroll_areas(self):
+        """returns both sidebox layouts"""
         return self.sidebox, self.sidebox2
 
     def set_active_data(self):
+        """Modifies self.active_dataX and sets it to the dataframe in which the "set x" value is. It then calls trim_graph() and plot_graph()."""
         self.x_combo.clear()
         self.y_combo.clear()
 
@@ -153,6 +157,7 @@ class DatasetChooser(QWidget):
         self.plot_graph()
 
     def init_metadata(self):
+        """This function simply populates some of the labels with the metadata from the chosen metadata data frame"""
         try:
             self.clear_layout(self.sidebox2)
             self.dataX = handler.get_active_sessions()[
@@ -171,9 +176,11 @@ class DatasetChooser(QWidget):
             print("Error initializing metadata")
 
     def trim_graph(self):
+        """Function that when called, will edit the bounds of the graph based on whether autofit is selected or not. Otherwise values in textboxes will be set to the bounds"""
         if self.begin_widget.text() == "" or self.end_widget.text() == "":
             return
         if self.autofit_widget.isChecked():
+            #NOTE: THIS MAY BE PROBLEMATIC WHEN ENABLED DUE TO IMPLEMENTATION
             self.begin = self.active_dataX[self.selected_x].iloc[0]
             self.end = self.active_dataX[self.selected_x].iloc[-1]
             self.begin_widget.setDisabled(True)
@@ -190,6 +197,7 @@ class DatasetChooser(QWidget):
         self.plot_widget.draw()
 
     def click_trim(self):
+        """When called, click_trim() is responsible for adjusting the visible range of data, by about 10%. It zooms in if left click or zooms out if right click"""
         if (
             self.begin_widget.text() == ""
             or self.end_widget.text() == ""
@@ -215,6 +223,9 @@ class DatasetChooser(QWidget):
         self.plot_widget.draw()
 
     def plot_graph(self):
+        """When called, this function is responsible for updating and redrawing a graph with user-selected data and settings.
+        It then 'draws' the graph, meaning it is an update to the appearance of a graph rather than a creation of a new plot. The performance
+        difference could be negligible here. More importantly, limit every possible call to redraw the graph as much as one can"""
         try:
             self.selected_x = self.x_combo.currentText()
             self.selected_y = self.y_combo.currentText()
@@ -244,6 +255,7 @@ class DatasetChooser(QWidget):
             print("Error plotting graph: " + str(e))
 
     def redraw_graph(self, timestamp=614):
+        """May not be finished. This creates the animation to redraw the graph as it would iterate through the x values of the dataset. Calls animate() along the way"""
         try:
             activeXY = self.active_dataX[(self.active_dataX["Time (s)"] >= 0) & (self.active_dataX["Time (s)"] >= timestamp)][[self.selected_x, self.selected_y]].to_numpy()
             ani = animation.FuncAnimation(self.plot_widget.fig, self.animate, frames = activeXY, interval = 10, repeat = False)
@@ -253,6 +265,8 @@ class DatasetChooser(QWidget):
             print("Error re-drawing graph: " + str(e))
 
     def animate(self, cords):
+        """Helper for the animation, adds new data points to X and Y data lists, clears the existing plot, and then re-plots the updated data with new labels, a title, and a grid. 
+        WARNING: use of plot() could be better than draw(), but we made it necessary that the function will use plot() because of adding to the active x and y datasets"""
         self.plot_widget.activeXY[0].append(cords[0])
         self.plot_widget.activeXY[1].append(cords[1])
         print(len(self.plot_widget.activeXY[0]))
@@ -265,8 +279,13 @@ class DatasetChooser(QWidget):
 
 
     def get_info(self):
+        """Returns value of self.x_set, the combobox for selecting the current dataset or csv. additionally it returns the current x and y columns"""
         return self.x_set.currentText(), self.selected_x, self.selected_y
 
+# ------------------------------
+# This class creates a graphical application with a main window that allows users to add and configure multiple datasets for plotting.
+# This is what is shown in the GUI from the main file: dash_board.py. It encapsulates everything described in this file up until this point.
+# ------------------------------
 
 class GraphModule(QMainWindow):
     def __init__(self, live=False, timestamper=None):
@@ -274,7 +293,7 @@ class GraphModule(QMainWindow):
         self.live = live
         self.data_set = []
         self.setWindowTitle("Module")
-        self.setGeometry(100, 100, 300, 200)
+        self.setGeometry(100, 100, 1050, 600)
         self.menubar = self.menuBar()
         self.menubar.setStyleSheet(
             "background-color: #333; color: white; font-size: 14px;"
@@ -316,6 +335,7 @@ class GraphModule(QMainWindow):
         # self.plot_button.clicked.connect(self.plot_graph)
 
     def add_dataset(self):
+        """Function called when 'Add Dataset' button is clicked, creates a new sidebox to add to the existing sidebox"""
         setChooser = DatasetChooser(self.central_widget, self.plot_widget)
         self.data_set.append(setChooser)
         sideBoxLayout = QVBoxLayout()
@@ -330,11 +350,15 @@ class GraphModule(QMainWindow):
         self.layout.addWidget(collapsible_container)
 
     def get_info(self):
+        """Getter that returns an array with the layouts of the sideboxes"""
         info = []
         for i in self.data_set:
             info.append(i.get_info())
 
         return info
 
+    #Why do we have this? ?    
+    """
     def init_combobox(self, xSet, xSelect, ySelect):
         self.data_set[0].init_combobox(xSet, xSelect, ySelect)
+    """

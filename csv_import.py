@@ -5,6 +5,10 @@ import pandas as pd
 import session as Session
 import session_handler as handler
 
+# ------------------------------
+# Custom class named CSVImport. This opens a new window which features a set of comboboxes and textboxes where the user can predefine
+# the metadata that will be associated with the CSV that they are importing.
+# ------------------------------
 
 class CSVImport(QDialog):
     def __init__(self, filename: str):
@@ -61,11 +65,8 @@ class CSVImport(QDialog):
         self.done(0)
 
     def find_gps_fix(self):
+
         ts = 0
-        # for index, row in self.df.iterrows():
-        #     if row["longitude"] != 0:
-        #         ts = row["timestamp (s)"]
-        #         break
         return ts
 
     def accept(self):
@@ -97,89 +98,3 @@ class CSVImport(QDialog):
 
         self.done(1)
         self.hide()
-
-        """
-        gps = []
-        useful = []
-        sus = []
-        lat = []
-
-        for i in range(2, 22):
-            if i in (196, 198):
-                continue
-            #with open(f'raw/run{i}-data.csv', 'r') as file:
-            with open(self.df) as file:
-                rows = file.read().split('\n')
-            
-            min_long_accel = 99999
-            max_long_accel = -99999
-            max_lateral_accel = -99999
-            max_gps_speed = -99999
-            ts = 0
-            run_length = 0
-            min_damper = 99999
-            max_damper = -999
-            max_temp = -99999
-            max_sg = -99
-            min_sg = 9999999
-
-            print(f"run {i}:")
-
-            for row in rows[1:-1]:
-                data = row.split(',')
-                long_accel = float(data[1])
-                lat_accel = abs(float(data[2]))
-                speed = float(data[17])
-                damper = float(data[13])
-                temp = float(data[10])
-                fr_sg = float(data[11])
-
-                min_long_accel = min(min_long_accel, long_accel)
-                max_long_accel = max(max_long_accel, long_accel)
-                max_lateral_accel = max(max_lateral_accel, lat_accel)
-                max_gps_speed = max(max_gps_speed, speed)
-                max_damper = max(max_damper, damper)
-                min_damper = min(min_damper, damper)
-                max_temp = max(max_temp, temp)
-                max_sg = max(max_sg, fr_sg)
-                min_sg = min(min_sg, fr_sg)
-
-                if ts == 0 and speed > 0:
-                    ts = float(data[0])
-
-                if row == rows[-10]:
-                    run_length = float(data[0])
-
-            if ts > 0:
-                gps.append(i)
-            if run_length > 120:
-                useful.append(i)
-            if max_damper - min_damper > 5:
-                sus.append(i)
-            if max_lateral_accel > 100:
-                lat.append(i)
-
-
-        
-            print(f"max accel (mG): {abs(max_long_accel)}")
-            print(f"max braking (mG): {min_long_accel}")
-            print(f"max lateral accel (mG): {max_lateral_accel}")
-            print(f"max gps speed (knots): {max_gps_speed}")
-            print(f"max rotor temp (C): {max_temp}")
-            print(f"rl damper range (mm): {max_damper - min_damper}")
-            print(f"fr sg range (adcval): {max_sg - min_sg}")
-            print(f"gps fix acquired at: {ts} seconds")
-            print(f"run length (s): {run_length}\n")
-        
-        print("runs with gps:")
-        print(gps)
-
-        print("\nruns longer than 2 minutes:")
-        print(useful)
-
-        print("\nruns with damper travel > 5mm:")
-        print(sus)
-
-        print("\nruns with lat accel > 100 mG:")
-        print(lat)
-        """

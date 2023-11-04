@@ -1,5 +1,12 @@
 import sys
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow,
+    QMdiArea, QVBoxLayout,
+    QHBoxLayout, QStatusBar,
+    QWidget, QPushButton,
+    QComboBox, QFileDialog,
+    QMdiSubWindow,
+)
 from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
 import session_handler as handler
@@ -16,23 +23,43 @@ import time
 class CustomDashboard(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        #Initialize and start application
+
+        # ------------------------------
+        # Pickle Implementation
+        # Object Serialization
+        # ------------------------------
+
+        #Loads established pickle files within /sessions folder
+        #Appends loaded files encapsulated within a 'Session' object and adds to sessions array of 'Session' objects stored in file
         self.sessions = []
         sessions = glob.glob(f"sessions/*.pkl")
         data = glob.glob(f"data/*.pkl")
         for file in sessions:
             session = pickle.load(open(file, "rb"))
             self.sessions.append(session)
-
+            
+        #Appends loaded files into
         for file in data:
             data = pickle.load(open(file, "rb"))
             handler.add_session(data)
 
-        self.timestamper = TimeStamper()
+        # ------------------------------
+        # Window Implementation
+        #      ____________
+        #     /            \  <- PyQT House
+        #    /              \
+        #   |   __________   |
+        #   |  |matplotlib|  |
+        #   |  |__________|  |
+        #   |                |
+        #   |________________|
+        # ------------------------------    
 
         self.setWindowTitle("Sun Devil Motorsports Data Dashboard")
         self.setWindowIcon(QIcon("90129757.jpg"))
         self.setGeometry(100, 100, 1800, 900)
-        handler.get_sessions_from_csv()
         self.mdi_area = QMdiArea()
         self.setCentralWidget(self.mdi_area)
         self.mdi_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -43,19 +70,24 @@ class CustomDashboard(QMainWindow):
         self.toolbar = QHBoxLayout()
         self.footer = QStatusBar()
         self.layout.addLayout(self.toolbar)
+        #Footer for Pause/Play Multimedia
         self.setStatusBar(self.footer)
         self.b = QPushButton("Play")
         self.b.clicked.connect(self.start)
 
         self.footer.addWidget(self.b)
 
+        # ------------------------------
+        # Adding Buttons to Layout and Window
+        # ------------------------------
+
         self.camera_module_button = QPushButton("Add Camera", self)
         self.camera_module_button.setMaximumWidth(200)
         self.camera_module_button.clicked.connect(self.create_camera_module)
 
-        self.velocity_module_button = QPushButton("Add Velocity vs Time")
-        self.velocity_module_button.setMaximumWidth(200)
-        self.velocity_module_button.clicked.connect(self.create_velocity_module)
+        self.graph_module_button = QPushButton("Add Graph Module")
+        self.graph_module_button.setMaximumWidth(200)
+        self.graph_module_button.clicked.connect(self.create_graph_module)
 
         self.live_button = QPushButton("Add Live Module")
         self.live_button.setMaximumWidth(200)
@@ -74,13 +106,14 @@ class CustomDashboard(QMainWindow):
         self.select_session_button.setPlaceholderText("Select Session")
         self.select_session_button.currentIndexChanged.connect(self.update_session)
 
+        #Populate drop down window with available session objects
         for session in self.sessions:
             self.select_session_button.addItem(
                 session["time"].strftime("%m/%d/%Y, %H:%M:%S")
             )
-
+        #Add all buttons to the toolbar
         self.toolbar.addWidget(self.camera_module_button)
-        self.toolbar.addWidget(self.velocity_module_button)
+        self.toolbar.addWidget(self.graph_module_button)
         self.toolbar.addWidget(self.live_button)
         self.toolbar.addWidget(self.add_csv_button)
         self.toolbar.addWidget(self.save_dashboard_button)
@@ -91,37 +124,41 @@ class CustomDashboard(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
-
-    # def create_new_module(self):
-    #     sub_window = QMdiSubWindow()
-    #     graph_module = GraphModule(self.timestamper)
-    #     self.graph_module.setWindowIcon(QIcon("90129757.jpg"))
-    #     sub_window.setWidget(graph_module)
-    #     self.mdi_area.addSubWindow(sub_window)
-    #     sub_window.show()
+        #Timestamper object
+        self.timestamper = TimeStamper()    
 
     def start(self):
         while self.timestamper.timestamp < 700:
             self.timestamper.timestamp += 5
             #time.sleep(1)
 
+        # ------------------------------
+        # Functions Paired with Button Press
+        # ------------------------------
     def create_camera_module(self):
+        """Upon a connection with a button, this will create a sub-window which is a container for a VideoPlayer (check class). 
+        This subwindow is added to the Multiple Document Interface which is the meat and potatoes of our application."""
         sub_window = QMdiSubWindow()
         camera_module = VideoPlayer(timestamper=self.timestamper)
         camera_module.setWindowIcon(QIcon("90129757.jpg"))
         sub_window.setWidget(camera_module)
+        sub_window.setGeometry(camera_module.geometry())
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 
-    def create_velocity_module(self):
-        # create velo module
+    def create_graph_module(self):
+        """Upon a connection with a button, this will create a sub-window which is a container for a GraphModule (check class)
+        This subwindow is added to the Multiple Document Interface which is the meat and potatoes of our application."""
         sub_window = QMdiSubWindow()
         graph_module = GraphModule(timestamper=self.timestamper)
         sub_window.setWidget(graph_module)
+        sub_window.setGeometry(graph_module.geometry())
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 
     def create_live_module(self):
+        """Upon a connection with a button, this will create a sub-window which is a container for a GraphModule with a boolean operator which will be set to True (check class)
+        This subwindow is added to the Multiple Document Interface which is the meat and potatoes of our application."""
         sub_window = QMdiSubWindow()
         sub_window.setWindowTitle("Live Module")
         graph_module = GraphModule(live=True)
@@ -130,6 +167,8 @@ class CustomDashboard(QMainWindow):
         sub_window.show()
 
     def introduce_csv_importer(self):
+        """Upon a connection with a button, this will open a file dialog which allows a user to select a csv file of their choosing.
+        This file will be imported using our CSVImporter class and added to a set of active sessions"""
         filename = QFileDialog.getOpenFileName(filter="CSV Files(*.csv)")
         if filename[0] == "":
             return
@@ -139,6 +178,7 @@ class CustomDashboard(QMainWindow):
         self.active_data = handler.get_active_sessions()[0].get_dataframe()
 
     def save_dashboard(self):
+        """Upon a connection with a button, this will save the current state of the dashboard and dump it into a new pickle file which will be stored in the sessions folder."""
         data = {
             "pos": [],
             "size": [],
@@ -147,6 +187,8 @@ class CustomDashboard(QMainWindow):
             "time": datetime.now(),
         }
         for tab in self.mdi_area.subWindowList():
+            #TAKE NOTE: SOME ERRORS OCCUR HERE WHEN SWITCHING ACTIVE SESSIONS. I GOT AN ERROR BUT STRUGGLED TO REPLICATE IT. 
+            #TRY TO DEBUG IN FUTURE.
             data["pos"].append((tab.pos().x(), tab.pos().y()))
             data["size"].append((tab.size().width(), tab.size().height()))
             data["metadata"].append(tab.widget().get_info())
@@ -158,14 +200,16 @@ class CustomDashboard(QMainWindow):
         self.sessions.append(data)
 
     def update_session(self):
+        """Upon a connection with a combobox, this will allow the user to select a different active session. This change will be repr"""
         active_session = self.sessions[self.select_session_button.currentIndex()]
+        #active_session = handler.get_active_sessions[self.select_session_button.currentIndex()]
         tab_amt = len(active_session["pos"])
         print(active_session)
         for window in self.mdi_area.subWindowList():
             self.mdi_area.removeSubWindow(window)
         print(len(self.mdi_area.subWindowList()))
         for tab in range(tab_amt):
-            self.create_velocity_module()
+            self.create_graph_module()
         for i, tab in enumerate(self.mdi_area.subWindowList()):
             tab.move(active_session["pos"][i][0], active_session["pos"][i][1])
             tab.resize(active_session["size"][i][0], active_session["size"][i][1])
