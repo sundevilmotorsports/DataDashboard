@@ -194,6 +194,8 @@ class DatasetChooser(QWidget):
             self.begin_widget.setEnabled(True)
             self.end_widget.setEnabled(True)
 
+        self.timestamper.set_init_time(self.begin)
+        self.timestamper.self_max_time(self.end)
         self.begin_widget.setText(str(int(self.begin)))
         self.end_widget.setText(str(int(self.end)))
         self._plot_ref.axes.set_xlim(self.begin, self.end)
@@ -261,6 +263,9 @@ class DatasetChooser(QWidget):
     def play_graph(self):
         """May not be finished. This creates the animation to redraw the graph as it would iterate through the x values of the dataset. Calls animate() along the way"""
         try:
+            if hasattr(self, "ani"):
+                self.ani.resume()
+                return
             self.ani = animation.FuncAnimation(
                 self.plot_widget.fig,
                 self.animate,
@@ -293,6 +298,13 @@ class DatasetChooser(QWidget):
         self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
         self.plot_widget.ax1.grid()
+
+    def pause_graph(self):
+        """Pauses the graph animation"""
+        try:
+            self.ani.pause()
+        except:
+            print("Error pausing graph")
 
     def get_info(self):
         """Returns value of self.x_set, the combobox for selecting the current dataset or csv. additionally it returns the current x and y columns"""
@@ -355,6 +367,9 @@ class GraphModule(QMainWindow):
 
     def play_graph(self):
         self.setChooser.play_graph()
+
+    def pause_graph(self):
+        self.setChooser.pause_graph()
 
     def add_dataset(self):
         """Function called when 'Add Dataset' button is clicked, creates a new sidebox to add to the existing sidebox"""

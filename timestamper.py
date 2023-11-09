@@ -9,6 +9,12 @@ class TimeStamper:
         # Create a list to store callback functions that observe changes to the timestamp.
         self._observers = []
 
+    def set_init_time(self, init):
+        self.time_stamp = init
+
+    def self_max_time(self, max_time):
+        self.max_time = max_time
+
     @property
     def timestamp(self):
         """Getter for the timestamp property. Returns the current timestamp value"""
@@ -29,5 +35,5 @@ class TimeStamper:
         self._observers.append(callback)
 
     def time_generator(self):
-        for i in range(self.time_stamp, self.max_time):
+        for i in range(int(self.time_stamp), int(self.max_time)):
             yield i

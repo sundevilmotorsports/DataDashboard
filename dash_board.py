@@ -78,10 +78,14 @@ class CustomDashboard(QMainWindow):
         self.layout.addLayout(self.toolbar)
         # Footer for Pause/Play Multimedia
         self.setStatusBar(self.footer)
-        self.b = QPushButton("Play")
-        self.b.clicked.connect(self.start)
+        self.play_button = QPushButton("Play")
+        self.play_button.clicked.connect(self.play)
+        self.setStatusBar(self.footer)
+        self.pause_button = QPushButton("Pause")
+        self.pause_button.clicked.connect(self.pause)
 
-        self.footer.addWidget(self.b)
+        self.footer.addWidget(self.play_button)
+        self.footer.addWidget(self.pause_button)
 
         # ------------------------------
         # Adding Buttons to Layout and Window
@@ -131,11 +135,16 @@ class CustomDashboard(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
         # Timestamper object
-        self.timestamper = TimeStamper(init_time=630)
+        self.timestamper = TimeStamper()
 
-    def start(self):
+    def play(self):
         for module in self.graph_modules:
             module.play_graph()
+            # time.sleep(1)
+
+    def pause(self):
+        for module in self.graph_modules:
+            module.pause_graph()
             # time.sleep(1)
 
         # ------------------------------
