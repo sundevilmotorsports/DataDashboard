@@ -295,7 +295,6 @@ class DatasetChooser(QWidget):
         )
         self.plot_widget.ax1.set_xlabel(self.selected_x)
         self.plot_widget.ax1.set_ylabel(self.selected_y)
-        self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
         self.plot_widget.ax1.grid()
 
