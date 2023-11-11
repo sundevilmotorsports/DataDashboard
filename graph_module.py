@@ -71,20 +71,26 @@ class DatasetChooser(QWidget):
         self.x_set.currentIndexChanged.connect(self.set_active_data)
 
         # creates labels and textboxes for editing graph limits and trims
-        trim_layout = QHBoxLayout()
+        trim_upper = QHBoxLayout()
+        trim_under = QHBoxLayout()
+        self.trim_container = QVBoxLayout()
         self.autofit_widget = QCheckBox("Autofit")
         self.autofit_widget.stateChanged.connect(self.trim_graph)
-        trim_layout.addWidget(self.autofit_widget)
-        trim_layout.addWidget(QLabel("Trim:"))
+        trim_upper.addWidget(self.autofit_widget)
+        #self.active_trim_box = QCheckBox("Select Active Trim")
+        #self.active_trim_box.stateChanged.connect(self.select_active_dataset_trim)
+        trim_under.addWidget(QLabel("Trim:"))
         self.begin_widget = QLineEdit()
         self.begin_widget.setFixedWidth(50)
         self.begin_widget.textChanged.connect(self.trim_graph)
-        trim_layout.addWidget(self.begin_widget)
-        trim_layout.addWidget(QLabel("≤ x ≤"))
+        trim_under.addWidget(self.begin_widget)
+        trim_under.addWidget(QLabel("≤ x ≤"))
         self.end_widget = QLineEdit()
         self.end_widget.setFixedWidth(50)
         self.end_widget.textChanged.connect(self.trim_graph)
-        trim_layout.addWidget(self.end_widget)
+        trim_under.addWidget(self.end_widget)
+        self.trim_container.addLayout(trim_upper)
+        self.trim_container.addLayout(trim_under)
 
         # creates labels and adds comboboxes to select columns in the graph
         self.set_combo_box()
@@ -94,7 +100,7 @@ class DatasetChooser(QWidget):
         self.sidebox.addWidget(self.x_combo)
         self.sidebox.addWidget(QLabel("Select Y Axis Column:"))
         self.sidebox.addWidget(self.y_combo)
-        self.sidebox.addLayout(trim_layout)
+        self.sidebox.addLayout(self.trim_container)
 
         self.sidebox2.setAlignment(Qt.AlignTop)
 
@@ -140,6 +146,13 @@ class DatasetChooser(QWidget):
 
     def get_scroll_areas(self):
         """returns both sidebox layouts"""
+        return self.sidebox, self.sidebox2
+    def get_scroll_areas_without_trim(self):
+        """returns both sidebox layouts"""
+        tempSidebox1 = self.sidebox
+        tempSidebox2 = self.sidebox2
+        tempSidebox1.removeItem(self.trim_container)
+        tempSidebox2.removeItem(self.trim_container)
         return self.sidebox, self.sidebox2
 
     def set_active_data(self):
@@ -270,7 +283,7 @@ class DatasetChooser(QWidget):
                 self.plot_widget.fig,
                 self.animate,
                 frames=self.timestamper.time_generator,
-                interval=100,
+                interval=50,
                 repeat=False,
                 save_count=50,
                 cache_frame_data=True,
@@ -295,7 +308,7 @@ class DatasetChooser(QWidget):
         )
         self.plot_widget.ax1.set_xlabel(self.selected_x)
         self.plot_widget.ax1.set_ylabel(self.selected_y)
-        self.plot_widget.ax1.legend()
+        #self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
         self.plot_widget.ax1.grid()
 
@@ -378,8 +391,7 @@ class GraphModule(QMainWindow):
         )
         self.data_set.append(setChooser)
         sideBoxLayout = QVBoxLayout()
-        sidebox, sidebox1 = setChooser.get_scroll_areas()
-
+        sidebox, sidebox1 = setChooser.get_scroll_areas_without_trim()
         sideBoxLayout.addLayout(sidebox)
         sideBoxLayout.addLayout(sidebox1)
         sideBoxLayout.insertWidget(-1, self.add_dataset_button)
@@ -395,9 +407,3 @@ class GraphModule(QMainWindow):
             info.append(i.get_info())
 
         return info
-
-    # Why do we have this? ?
-    """
-    def init_combobox(self, xSet, xSelect, ySelect):
-        self.data_set[0].init_combobox(xSet, xSelect, ySelect)
-    """
