@@ -40,6 +40,7 @@ class CustomDashboard(QMainWindow):
         # Appends loaded files encapsulated within a 'Session' object and adds to sessions array of 'Session' objects stored in file
         self.sessions = []
         self.graph_modules = []
+        self.video_modules = []
         sessions = glob.glob(f"sessions/*.pkl")
         data = glob.glob(f"data/*.pkl")
         for file in sessions:
@@ -140,11 +141,15 @@ class CustomDashboard(QMainWindow):
     def play(self):
         for module in self.graph_modules:
             module.play_graph()
+        for module in self.video_modules:
+            module.play()
             # time.sleep(1)
 
     def pause(self):
         for module in self.graph_modules:
             module.pause_graph()
+        for module in self.video_modules:
+            module.pause()
             # time.sleep(1)
 
         # ------------------------------
@@ -156,10 +161,10 @@ class CustomDashboard(QMainWindow):
         This subwindow is added to the Multiple Document Interface which is the meat and potatoes of our application.
         """
         sub_window = QMdiSubWindow()
-        camera_module = VideoPlayer(timestamper=self.timestamper)
-        camera_module.setWindowIcon(QIcon("90129757.jpg"))
-        sub_window.setWidget(camera_module)
-        sub_window.setGeometry(camera_module.geometry())
+        self.video_modules.append(VideoPlayer(timestamper=self.timestamper))
+        self.video_modules[-1].setWindowIcon(QIcon("90129757.jpg"))
+        sub_window.setWidget(self.video_modules[-1])
+        sub_window.setGeometry(self.video_modules[-1].geometry())
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 
