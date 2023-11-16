@@ -297,23 +297,27 @@ class DatasetChooser(QWidget):
         """Helper for the animation, adds new data points to X and Y data lists, clears the existing plot, and then re-plots the updated data with new labels, a title, and a grid.
         WARNING: use of plot() could be better than draw(), but we made it necessary that the function will use plot() because of adding to the active x and y datasets
         """
-        activeXY = self.active_dataX[
-            (self.active_dataX["Time (s)"] >= 0)
-            & (self.active_dataX["Time (s)"] <= timestamp)
-        ][[self.selected_x, self.selected_y]]
-        self.plot_widget.activeXY[0] = activeXY[self.selected_x].tolist()
-        self.plot_widget.activeXY[1] = activeXY[self.selected_y].tolist()
-        self.plot_widget.ax1.clear()
-        plotrefs = self.plot_widget.ax1.plot(
-            self.plot_widget.activeXY[0], self.plot_widget.activeXY[1]
-        )
+        try:
+            activeXY = self.active_dataX[
+                (self.active_dataX["Time (s)"] >= 0)
+                & (self.active_dataX["Time (s)"] <= timestamp)
+            ][[self.selected_x, self.selected_y]]
+            self.plot_widget.activeXY[0] = activeXY[self.selected_x].tolist()
+            self.plot_widget.activeXY[1] = activeXY[self.selected_y].tolist()
+            self.plot_widget.ax1.clear()
+            plotrefs = self.plot_widget.ax1.plot(
+                self.plot_widget.activeXY[0], self.plot_widget.activeXY[1]
+            )
 
-        self._plot_ref = plotrefs[0]
-        self.plot_widget.ax1.set_xlabel(self.selected_x)
-        self.plot_widget.ax1.set_ylabel(self.selected_y)
-        # self.plot_widget.ax1.legend()
-        self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
-        self.plot_widget.ax1.grid()
+            self._plot_ref = plotrefs[0]
+            self.plot_widget.ax1.set_xlabel(self.selected_x)
+            self.plot_widget.ax1.set_ylabel(self.selected_y)
+            self.plot_widget.ax1.set_xlim(timestamp - 100, timestamp)
+            # self.plot_widget.ax1.legend()
+            self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
+            self.plot_widget.ax1.grid()
+        except Exception as e:
+            print("Error animating graph: " + str(e))
 
     def pause_graph(self):
         """Pauses the graph animation"""
