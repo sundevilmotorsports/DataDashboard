@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QFileDialog,
     QMdiSubWindow,
+    QSlider,
 )
 from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
@@ -85,8 +86,12 @@ class CustomDashboard(QMainWindow):
         self.pause_button = QPushButton("Pause")
         self.pause_button.clicked.connect(self.pause)
 
+        self.slider = QSlider(Qt.Horizontal)
+        self.status_bar = QStatusBar()
+
         self.footer.addWidget(self.play_button)
         self.footer.addWidget(self.pause_button)
+        self.footer.addPermanentWidget(self.slider)
 
         # ------------------------------
         # Adding Buttons to Layout and Window
@@ -129,6 +134,7 @@ class CustomDashboard(QMainWindow):
         self.toolbar.addWidget(self.add_csv_button)
         self.toolbar.addWidget(self.save_dashboard_button)
         self.toolbar.addWidget(self.select_session_button)
+
         self.toolbar.addStretch(1)
         self.layout.addWidget(self.mdi_area)
 

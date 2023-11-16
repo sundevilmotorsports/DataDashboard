@@ -31,6 +31,7 @@ class VideoPlayer(QMainWindow):
         self.media_player = QMediaPlayer()
         self.video_widget = QVideoWidget()  # Use QVideoWidget to display video
         self.media_player.setVideoOutput(self.video_widget)
+        
 
         self.layout.addWidget(self.video_widget, 5)
 
