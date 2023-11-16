@@ -77,8 +77,8 @@ class DatasetChooser(QWidget):
         self.autofit_widget = QCheckBox("Autofit")
         self.autofit_widget.stateChanged.connect(self.trim_graph)
         trim_upper.addWidget(self.autofit_widget)
-        #self.active_trim_box = QCheckBox("Select Active Trim")
-        #self.active_trim_box.stateChanged.connect(self.select_active_dataset_trim)
+        # self.active_trim_box = QCheckBox("Select Active Trim")
+        # self.active_trim_box.stateChanged.connect(self.select_active_dataset_trim)
         trim_under.addWidget(QLabel("Trim:"))
         self.begin_widget = QLineEdit()
         self.begin_widget.setFixedWidth(50)
@@ -147,6 +147,7 @@ class DatasetChooser(QWidget):
     def get_scroll_areas(self):
         """returns both sidebox layouts"""
         return self.sidebox, self.sidebox2
+
     def get_scroll_areas_without_trim(self):
         """returns both sidebox layouts"""
         tempSidebox1 = self.sidebox
@@ -303,12 +304,14 @@ class DatasetChooser(QWidget):
         self.plot_widget.activeXY[0] = activeXY[self.selected_x].tolist()
         self.plot_widget.activeXY[1] = activeXY[self.selected_y].tolist()
         self.plot_widget.ax1.clear()
-        self.plot_widget.ax1.plot(
+        plotrefs = self.plot_widget.ax1.plot(
             self.plot_widget.activeXY[0], self.plot_widget.activeXY[1]
         )
+
+        self._plot_ref = plotrefs[0]
         self.plot_widget.ax1.set_xlabel(self.selected_x)
         self.plot_widget.ax1.set_ylabel(self.selected_y)
-        #self.plot_widget.ax1.legend()
+        # self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
         self.plot_widget.ax1.grid()
 
@@ -316,8 +319,8 @@ class DatasetChooser(QWidget):
         """Pauses the graph animation"""
         try:
             self.ani.pause()
-        except:
-            print("Error pausing graph")
+        except Exception as e:
+            print("Error pausing graph " + str(e))
 
     def get_info(self):
         """Returns value of self.x_set, the combobox for selecting the current dataset or csv. additionally it returns the current x and y columns"""
