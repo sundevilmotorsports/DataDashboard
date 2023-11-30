@@ -82,12 +82,15 @@ class CustomDashboard(QMainWindow):
         self.setStatusBar(self.footer)
         self.play_button = QPushButton("Play")
         self.play_button.clicked.connect(self.play)
-        self.setStatusBar(self.footer)
         self.pause_button = QPushButton("Pause")
         self.pause_button.clicked.connect(self.pause)
 
         self.slider = QSlider(Qt.Horizontal)
         self.status_bar = QStatusBar()
+
+        self.slider.valueChanged.connect(self.slider_moved)
+        self.slider.setTickPosition(QSlider.TicksBelow)
+        self.slider.setTickInterval(1)
 
         self.footer.addWidget(self.play_button)
         self.footer.addWidget(self.pause_button)
@@ -142,7 +145,11 @@ class CustomDashboard(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
         # Timestamper object
-        self.timestamper = TimeStamper()
+        self.timestamper = TimeStamper(slider=self.slider)
+
+    def slider_moved(self, position):
+        print(position)
+        self.timestamper.time_stamp = position * (self.timestamper.max_time / 100)
 
     def play(self):
         for module in self.graph_modules:

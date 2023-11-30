@@ -10,6 +10,7 @@ import session_handler as handler
 # the metadata that will be associated with the CSV that they are importing.
 # ------------------------------
 
+
 class CSVImport(QDialog):
     def __init__(self, filename: str):
         super().__init__()
@@ -39,12 +40,14 @@ class CSVImport(QDialog):
         self.edit_driver = QLineEdit("Driver")
         self.edit_car = QLineEdit("Car")
         self.edit_track = QLineEdit("Track Name")
+        self.timestamp_column = QLineEdit("Time (s)")
         self.live = QCheckBox("Live")
         session_details_layout.addWidget(self.edit_name)
         session_details_layout.addWidget(self.edit_date)
         session_details_layout.addWidget(self.edit_driver)
         session_details_layout.addWidget(self.edit_car)
         session_details_layout.addWidget(self.edit_track)
+        session_details_layout.addWidget(self.timestamp_column)
         session_details_layout.addWidget(self.live)
 
         # dialog management
@@ -65,7 +68,6 @@ class CSVImport(QDialog):
         self.done(0)
 
     def find_gps_fix(self):
-
         ts = 0
         return ts
 

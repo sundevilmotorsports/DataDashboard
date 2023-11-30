@@ -277,7 +277,7 @@ class DatasetChooser(QWidget):
     def play_graph(self):
         """May not be finished. This creates the animation to redraw the graph as it would iterate through the x values of the dataset. Calls animate() along the way"""
         try:
-            if hasattr(self, "ani"):
+            if hasattr(self, "ani") and self.ani.event_source != None:
                 self.ani.resume()
                 return
             self.ani = animation.FuncAnimation(
@@ -291,6 +291,7 @@ class DatasetChooser(QWidget):
             )
             self.plot_widget.draw()
         except Exception as e:
+            self.plot_graph()
             print("Error re-drawing graph: " + str(e))
 
     def animate(self, timestamp):
@@ -299,8 +300,8 @@ class DatasetChooser(QWidget):
         """
         try:
             activeXY = self.active_dataX[
-                (self.active_dataX["Time (s)"] >= 0)
-                & (self.active_dataX["Time (s)"] <= timestamp)
+                (self.active_dataX.iloc[:, 0] >= 0)
+                & (self.active_dataX.iloc[:, 0] <= timestamp)
             ][[self.selected_x, self.selected_y]]
             self.plot_widget.activeXY[0] = activeXY[self.selected_x].tolist()
             self.plot_widget.activeXY[1] = activeXY[self.selected_y].tolist()
@@ -376,6 +377,11 @@ class GraphModule(QMainWindow):
 
         self.add_dataset_button = QPushButton("Add Dataset", self.central_widget)
         self.add_dataset_button.clicked.connect(self.add_dataset)
+        self.reset_button = QPushButton("Reset", self.central_widget)
+        self.reset_button.clicked.connect(self.reset)
+        self.footer = QStatusBar()
+        self.setStatusBar(self.footer)
+        self.footer.addWidget(self.reset_button)
         sideBoxLayout.addWidget(self.add_dataset_button)
 
         collapsible_container = Collapsible()
@@ -384,6 +390,10 @@ class GraphModule(QMainWindow):
         # self.layout.addLayout(sideBoxLayout)
 
         # self.plot_button.clicked.connect(self.plot_graph)
+
+    def reset(self):
+        self.pause_graph()
+        self.setChooser.plot_graph()
 
     def play_graph(self):
         self.setChooser.play_graph()
