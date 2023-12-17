@@ -268,7 +268,7 @@ class DatasetChooser(QWidget):
             print("Could not disconnect all connections" + str(e))
 
         self.begin = float(self.timestamper.slider.value() * (self.timestamper.max_time / 100))
-        self.end = float(self.timestamper.max_time)
+        self.end = float(self.begin + 100)
         self.timestamper.set_init_time(self.begin)
         #self.timestamper.set_max_time(self.end)
         self.begin_widget.setText(str(int(self.begin)))
@@ -431,8 +431,6 @@ class DatasetChooser(QWidget):
             self.trim_connections = []
         except Exception as e:
             print("Could not disconnect all connections" + str(e))
-
-
         self.trim_connections = []
         self.trim_connections.append(self.begin_widget.textChanged.connect(self.trim_graph))
         self.trim_connections.append(self.end_widget.textChanged.connect(self.trim_graph))

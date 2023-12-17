@@ -172,6 +172,7 @@ class CustomDashboard(QMainWindow):
             # time.sleep(1)
 
     def update_slider_label(self, value):
+        value = int(value * (self.timestamper.max_time / 100))
         self.slider_label.setText(f"Slider Value: {value}")
 
         # ------------------------------
