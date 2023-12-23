@@ -22,6 +22,7 @@ import glob
 import pickle
 from timestamper import TimeStamper
 from datetime import datetime
+from lap_module import LapModule
 from PyQt5.QtCore import Qt
 import time
 
@@ -112,6 +113,11 @@ class CustomDashboard(QMainWindow):
         self.live_button.setMaximumWidth(200)
         self.live_button.clicked.connect(self.create_live_module)
 
+
+        self.lap_button = QPushButton("Add Lap Module")
+        self.lap_button.setMaximumWidth(200)
+        self.lap_button.clicked.connect(self.create_lap_module)
+
         self.add_csv_button = QPushButton("Add CSV File")
         self.add_csv_button.setMaximumWidth(200)
         self.add_csv_button.clicked.connect(self.introduce_csv_importer)
@@ -134,6 +140,7 @@ class CustomDashboard(QMainWindow):
         self.toolbar.addWidget(self.camera_module_button)
         self.toolbar.addWidget(self.graph_module_button)
         self.toolbar.addWidget(self.live_button)
+        self.toolbar.addWidget(self.lap_button)
         self.toolbar.addWidget(self.add_csv_button)
         self.toolbar.addWidget(self.save_dashboard_button)
         self.toolbar.addWidget(self.select_session_button)
@@ -200,6 +207,14 @@ class CustomDashboard(QMainWindow):
         sub_window.setWindowTitle("Live Module")
         graph_module = GraphModule(live=True)
         sub_window.setWidget(graph_module)
+        self.mdi_area.addSubWindow(sub_window)
+        sub_window.show()
+
+    def create_lap_module(self):
+        sub_window = QMdiSubWindow()
+        sub_window.setWindowTitle("Lap Module")
+        lap_module = LapModule()
+        sub_window.setWidget(lap_module)
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 

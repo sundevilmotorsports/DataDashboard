@@ -337,7 +337,6 @@ class DatasetChooser(QWidget):
 # This is what is shown in the GUI from the main file: dash_board.py. It encapsulates everything described in this file up until this point.
 # ------------------------------
 
-
 class GraphModule(QMainWindow):
     def __init__(self, live=False, timestamper=None):
         super().__init__()
