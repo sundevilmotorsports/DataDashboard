@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMdiSubWindow,
     QSlider,
+    QLabel
 )
 from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
@@ -22,7 +23,6 @@ import glob
 import pickle
 from timestamper import TimeStamper
 from datetime import datetime
-from lap_module import LapModule
 from PyQt5.QtCore import Qt
 import time
 
@@ -85,17 +85,24 @@ class CustomDashboard(QMainWindow):
         self.play_button.clicked.connect(self.play)
         self.pause_button = QPushButton("Pause")
         self.pause_button.clicked.connect(self.pause)
-
+        ''' MOVED SLIDER INTO TIMESTAMPER FOR TO ALLOW GRAPHMODULE TO ACCESS THE INFO WITHOUT CREATING CIRCULAR IMPORT
         self.slider = QSlider(Qt.Horizontal)
-        self.status_bar = QStatusBar()
 
         self.slider.valueChanged.connect(self.slider_moved)
         self.slider.setTickPosition(QSlider.TicksBelow)
         self.slider.setTickInterval(1)
+        '''
+
+        self.slider_label = QLabel("Slider Value: ")
+
+        self.timestamper = TimeStamper()
+
+        self.timestamper.slider.valueChanged.connect(self.update_slider_label)
 
         self.footer.addWidget(self.play_button)
         self.footer.addWidget(self.pause_button)
-        self.footer.addPermanentWidget(self.slider)
+        self.footer.addPermanentWidget(self.slider_label)
+        self.footer.addPermanentWidget(self.timestamper.slider)
 
         # ------------------------------
         # Adding Buttons to Layout and Window
@@ -112,11 +119,6 @@ class CustomDashboard(QMainWindow):
         self.live_button = QPushButton("Add Live Module")
         self.live_button.setMaximumWidth(200)
         self.live_button.clicked.connect(self.create_live_module)
-
-
-        self.lap_button = QPushButton("Add Lap Module")
-        self.lap_button.setMaximumWidth(200)
-        self.lap_button.clicked.connect(self.create_lap_module)
 
         self.add_csv_button = QPushButton("Add CSV File")
         self.add_csv_button.setMaximumWidth(200)
@@ -140,7 +142,6 @@ class CustomDashboard(QMainWindow):
         self.toolbar.addWidget(self.camera_module_button)
         self.toolbar.addWidget(self.graph_module_button)
         self.toolbar.addWidget(self.live_button)
-        self.toolbar.addWidget(self.lap_button)
         self.toolbar.addWidget(self.add_csv_button)
         self.toolbar.addWidget(self.save_dashboard_button)
         self.toolbar.addWidget(self.select_session_button)
@@ -152,11 +153,9 @@ class CustomDashboard(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
         # Timestamper object
-        self.timestamper = TimeStamper(slider=self.slider)
+        
 
-    def slider_moved(self, position):
-        print(position)
-        self.timestamper.time_stamp = position * (self.timestamper.max_time / 100)
+    
 
     def play(self):
         for module in self.graph_modules:
@@ -171,6 +170,10 @@ class CustomDashboard(QMainWindow):
         for module in self.video_modules:
             module.pause()
             # time.sleep(1)
+
+    def update_slider_label(self, value):
+        value = int(value * (self.timestamper.max_time / 100))
+        self.slider_label.setText(f"Slider Value: {value}")
 
         # ------------------------------
         # Functions Paired with Button Press
@@ -207,14 +210,6 @@ class CustomDashboard(QMainWindow):
         sub_window.setWindowTitle("Live Module")
         graph_module = GraphModule(live=True)
         sub_window.setWidget(graph_module)
-        self.mdi_area.addSubWindow(sub_window)
-        sub_window.show()
-
-    def create_lap_module(self):
-        sub_window = QMdiSubWindow()
-        sub_window.setWindowTitle("Lap Module")
-        lap_module = LapModule()
-        sub_window.setWidget(lap_module)
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
 
