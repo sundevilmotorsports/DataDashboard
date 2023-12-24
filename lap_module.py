@@ -69,9 +69,10 @@ class LapChooser(QWidget):
                 min_seconds = lap_dataframe['Time (s)'].min()
                 lap_dataframe['Time (s)'] -= min_seconds
 
-        self.max = max(self.max, lap_dataframe['Time (s)'].max())
+        
         
         for lap_number, lap_dataframe in self.lap_dataframes.items():
+            self.max = max(self.max, lap_dataframe['Time (s)'].max())
             print(f"DataFrame for Lap {lap_number}:\n")
             print(lap_dataframe)
             print("\n" + "="*50 + "\n")
