@@ -58,7 +58,7 @@ class LapChooser(QWidget):
         
         self.data = self.data[0].get_dataframe()
         self.lap_dataframes = {}
-        self.plot_laps_dataframe = {}
+        self.plot_laps_dataframe = []
 
         for _, row in self.data.iterrows():
             lap_number = row['Lap (#)']
@@ -72,8 +72,9 @@ class LapChooser(QWidget):
         for lap_number, lap_dataframe in self.lap_dataframes.items():
             if 'Time (s)' in lap_dataframe.columns:
                 min_seconds = lap_dataframe['Time (s)'].min()
-                self.max = max(self.max, lap_dataframe['Time (s)'].max())
                 lap_dataframe['Time (s)'] -= min_seconds
+
+        self.max = max(self.max, lap_dataframe['Time (s)'].max())
         
         for lap_number, lap_dataframe in self.lap_dataframes.items():
             print(f"DataFrame for Lap {lap_number}:\n")
@@ -193,16 +194,27 @@ class LapChooser(QWidget):
         self.y_data = None
 
         self.plot_widget.ax1.clear()
+        #print(self.plot_laps_dataframe)
 
-        if isinstance(self.plot_laps_dataframe, pd.DataFrame):
-            if not self.plot_laps_dataframe.empty and self.selected_x in self.plot_laps_dataframe.columns and self.selected_y in self.plot_laps_dataframe.columns:
-                self.x_data = self.plot_laps_dataframe[self.selected_x]
-                self.y_data = self.plot_laps_dataframe[self.selected_y]
-                self.plot_widget.ax1.plot(self.x_data, self.y_data, label="All Laps")
+        '''
+        for lap_number, lap_dataframe in self.plot_laps_dataframe.items():
+            if not lap_dataframe.empty and self.selected_x in lap_dataframe.columns and self.selected_y in lap_dataframe.columns:
+                #print("lil something")
+                self.x_data = lap_dataframe[self.selected_x]
+                self.y_data = lap_dataframe[self.selected_y]
+                self.plot_widget.ax1.plot(self.x_data, self.y_data, label=f"Lap {lap_number}")
             else:
-                print("Error: plot_laps_dataframe is empty or does not contain selected columns.")
-        else:
-            print("Error: plot_laps_dataframe is not a DataFrame.")
+                print("Either data frame is empty, or the selection for x and y axis are not valid")
+
+        '''
+        for lap_number, lap_dataframe in enumerate(self.plot_laps_dataframe):
+            if not lap_dataframe.empty and self.selected_x in lap_dataframe.columns and self.selected_y in lap_dataframe.columns:
+                #print("lil something")
+                self.x_data = lap_dataframe[self.selected_x]
+                self.y_data = lap_dataframe[self.selected_y]
+                self.plot_widget.ax1.plot(self.x_data, self.y_data, label=f"Lap {lap_number}")
+            else:
+                print("Either data frame is empty, or the selection for x and y axis are not valid")
         
         '''
         if self._plot_ref is None:
@@ -224,7 +236,7 @@ class LapChooser(QWidget):
         self.plot_widget.ax1.grid()
         self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_xlim(0, self.max)
-        #self.trim_graph()
+        self.trim_graph()
         self.plot_widget.draw()
     
     def manage_Laps(self):
@@ -233,12 +245,15 @@ class LapChooser(QWidget):
         #print(selected_lap_numbers)
 
         selected_lap_dataframes = [self.lap_dataframes[i] for i in selected_lap_numbers]
-
+        print(selected_lap_dataframes)
+        self.plot_laps_dataframe = selected_lap_dataframes
+        '''
         if selected_lap_dataframes:
             self.plot_laps_dataframe = pd.concat(selected_lap_dataframes, axis=0)
         else:
             print("Error: No lap DataFrames found for selected lap numbers.")
-            self.plot_laps_dataframe = {}
+            self.plot_laps_dataframe = []
+        '''
         #print(self.plot_laps_dataframe)
         self.plot_graph()
         
