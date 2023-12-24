@@ -32,14 +32,9 @@ class LapChooser(QWidget):
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
 
-        #self.max = max_val
-
         self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
 
-        self._plot_ref = None
-
-        #self.laps_df = laps_df #graphmpdule will supply the physical data that needs to be graphed
-
+       
 
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
@@ -181,9 +176,8 @@ class LapChooser(QWidget):
         self.plot_widget.draw()
   
     def plot_graph(self):
-        """When called, this function is responsible for updating and redrawing a graph with user-selected data and settings.
-        It then 'draws' the graph, meaning it is an update to the appearance of a graph rather than a creation of a new plot. The performance
-        difference could be negligible here. More importantly, limit every possible call to redraw the graph as much as one can
+        """This plot_graph uses a global variable which is a list of dataframes corresponding to the laps taken by the car in the session selected.
+            It simply clears the plot and plots every dataframe in self.plot_laps_dataframe that is edited by manage_Laps()
         """
         #self.x_data = self.active_dataX[self.selected_x]
         #self.y_data = self.active_dataX[self.selected_y]
@@ -196,17 +190,6 @@ class LapChooser(QWidget):
         self.plot_widget.ax1.clear()
         #print(self.plot_laps_dataframe)
 
-        '''
-        for lap_number, lap_dataframe in self.plot_laps_dataframe.items():
-            if not lap_dataframe.empty and self.selected_x in lap_dataframe.columns and self.selected_y in lap_dataframe.columns:
-                #print("lil something")
-                self.x_data = lap_dataframe[self.selected_x]
-                self.y_data = lap_dataframe[self.selected_y]
-                self.plot_widget.ax1.plot(self.x_data, self.y_data, label=f"Lap {lap_number}")
-            else:
-                print("Either data frame is empty, or the selection for x and y axis are not valid")
-
-        '''
         for lap_number, lap_dataframe in enumerate(self.plot_laps_dataframe):
             if not lap_dataframe.empty and self.selected_x in lap_dataframe.columns and self.selected_y in lap_dataframe.columns:
                 #print("lil something")
@@ -216,20 +199,6 @@ class LapChooser(QWidget):
             else:
                 print("Either data frame is empty, or the selection for x and y axis are not valid")
         
-        '''
-        if self._plot_ref is None:
-            plotrefs = self.plot_widget.ax1.plot(
-                self.x_data, self.y_data, label=self.x_set.currentText()
-            )
-            self._plot_ref = plotrefs[0]
-
-        else:
-            self._plot_ref.set_data(self.x_data, self.y_data)
-            self._plot_ref.set_label(self.x_set.currentText())    
-            self.plot_widget.ax1.relim()
-            self.plot_widget.ax1.autoscale()
-            self.plot_widget.ax1.autoscale()
-        '''
         self.plot_widget.ax1.set_xlabel(self.selected_x)
         self.plot_widget.ax1.set_ylabel(self.selected_y)
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
@@ -247,13 +216,7 @@ class LapChooser(QWidget):
         selected_lap_dataframes = [self.lap_dataframes[i] for i in selected_lap_numbers]
         print(selected_lap_dataframes)
         self.plot_laps_dataframe = selected_lap_dataframes
-        '''
-        if selected_lap_dataframes:
-            self.plot_laps_dataframe = pd.concat(selected_lap_dataframes, axis=0)
-        else:
-            print("Error: No lap DataFrames found for selected lap numbers.")
-            self.plot_laps_dataframe = []
-        '''
+
         #print(self.plot_laps_dataframe)
         self.plot_graph()
         
@@ -287,50 +250,7 @@ class LapModule(QMainWindow):
         
         #array to store all laps graphed
         self.laps_arr = []
-
-        # checkable combo box addition from class defined below
-        '''
-        self.data = handler.get_active_sessions()
-        self.names = handler.get_names()
-
-        self.data = self.data[0].get_dataframe()
-        self.lap_dataframes = {}
-
-        for _, row in self.data.iterrows():
-            lap_number = row['Lap (#)']
-            
-            if lap_number not in self.lap_dataframes:
-                self.lap_dataframes[lap_number] = pd.DataFrame(columns=self.data.columns)
-
-            self.lap_dataframes[lap_number] = pd.concat([self.lap_dataframes[lap_number], row.to_frame().transpose()], ignore_index=True)
-        #max value for x axis i.e seconds
-        self.max_val = 0
-        for lap_number, lap_dataframe in self.lap_dataframes.items():
-            if 'Time (s)' in lap_dataframe.columns:
-                min_seconds = lap_dataframe['Time (s)'].min()
-                self.max_val = max(self.max_val, lap_dataframe['Time (s)'].max())
-                lap_dataframe['Time (s)'] -= min_seconds
-        
-        for lap_number, lap_dataframe in self.lap_dataframes.items():
-            print(f"DataFrame for Lap {lap_number}:\n")
-            print(lap_dataframe)
-            print("\n" + "="*50 + "\n")
-        
-        # checkable combo box addition from class defined below
-        self.laps_combo = CheckableComboBox(self)
-        self.laps_combo.setStyleSheet(
-            "background-color: white; color: black; font-size: 14px;"
-        )
-        
-        # array to hold every 'lap', just a placeholder to populate combobox
-        self.lap_array = []
-        for i in range(len(self.lap_dataframes)+5):#arbitrary +5 but i cant explain why the length is not actually the length one would think
-            if self.lap_dataframes.get(i) is not None:
-                self.lap_array.append(f"Lap {i}")
-        
-        print(self.lap_array)
-        self.laps_combo.addItems(self.lap_array)
-        '''
+    
         self.setChooser = LapChooser(
             self.central_widget, self.plot_widget#, self.max_val
         )
@@ -344,17 +264,15 @@ class LapModule(QMainWindow):
         #self.laps_combo.model().dataChanged.connect(self.manage_laps)
 
         self.reset_button = QPushButton("Reset", self.central_widget)
-        self.reset_button.clicked.connect(self.reset)
+        #self.reset_button.clicked.connect(self.reset)
         self.footer = QStatusBar()
         self.setStatusBar(self.footer)
         self.footer.addWidget(self.reset_button)
-        #sideBoxLayout.addWidget(QLabel("Select Laps:"))
-        #sideBoxLayout.addWidget(self.laps_combo)
-
+        
         collapsible_container = Collapsible()
         collapsible_container.setContentLayout(sideBoxLayout)
         self.layout.addWidget(collapsible_container)
-
+    '''
     def reset(self):
         self.pause_graph()
         self.setChooser.set_active_data()
@@ -366,35 +284,14 @@ class LapModule(QMainWindow):
     def pause_graph(self):
         self.setChooser.pause_graph()
     '''
-    def manage_laps(self):
-        """Function called when 'Add Dataset' button is clicked, creates a new sidebox to add to the existing sidebox"""
-        print("manage laps function called")
-        setChooser = LapChooser(
-            self.central_widget, self.plot_widget#, self.max_val
-        )
-        if setChooser not in self.laps_arr:
-            self.laps_arr.append(setChooser)
-        sideBoxLayout = QVBoxLayout()
-        sidebox, sidebox1 = setChooser.get_scroll_areas()
-        sideBoxLayout.addLayout(sidebox)
-        sideBoxLayout.addLayout(sidebox1)
-        #sideBoxLayout.insertWidget(-1, self.laps_combo)
-        # self.layout.addLayout(sideBoxLayout)
-        #collapsible_container = Collapsible()
-        #collapsible_container.setContentLayout(sideBoxLayout)
-        #self.layout.addWidget(collapsible_container)
-    '''
     def get_info(self):
         """Getter that returns an array with the layouts of the sideboxes"""
         info = []
         for i in self.data_set:
             info.append(i.get_info())
         return info
-    def just_something(self):
-        print(self.laps_combo.currentData())
-    
 
-###Found this on stack7uk,.so dont ask, looks cool tho
+###Found this on stackexchange.so dont ask, looks cool tho
 class CheckableComboBox(QComboBox):
     # Subclass Delegate to increase item height
     class Delegate(QStyledItemDelegate):
