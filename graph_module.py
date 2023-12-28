@@ -312,6 +312,7 @@ class DatasetChooser(QWidget):
             self.selected_y = self.y_combo.currentText()
             self.x_data = self.active_dataX[self.selected_x]
             self.y_data = self.active_dataX[self.selected_y]
+            
             if self._plot_ref is None:
                 plotrefs = self.plot_widget.ax1.plot(
                     self.x_data, self.y_data, label=self.x_set.currentText()
@@ -324,6 +325,7 @@ class DatasetChooser(QWidget):
                 self.plot_widget.ax1.relim()
                 self.plot_widget.ax1.autoscale()
                 self.plot_widget.ax1.autoscale()
+            
             self.plot_widget.ax1.set_xlabel(self.selected_x)
             self.plot_widget.ax1.set_ylabel(self.selected_y)
             self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)

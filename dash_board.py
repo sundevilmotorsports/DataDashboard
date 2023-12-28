@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMdiSubWindow,
     QSlider,
+    QLabel,
 )
 import os
 from PyQt5.QtGui import QIcon
@@ -90,17 +91,24 @@ class CustomDashboard(QMainWindow):
         self.play_button.clicked.connect(self.play)
         self.pause_button = QPushButton("Pause")
         self.pause_button.clicked.connect(self.pause)
-
+        ''' MOVED SLIDER INTO TIMESTAMPER FOR TO ALLOW GRAPHMODULE TO ACCESS THE INFO WITHOUT CREATING CIRCULAR IMPORT
         self.slider = QSlider(Qt.Horizontal)
-        self.status_bar = QStatusBar()
 
         self.slider.valueChanged.connect(self.slider_moved)
         self.slider.setTickPosition(QSlider.TicksBelow)
         self.slider.setTickInterval(1)
+        '''
+
+        self.slider_label = QLabel("Slider Value: ")
+
+        self.timestamper = TimeStamper()
+
+        self.timestamper.slider.valueChanged.connect(self.update_slider_label)
 
         self.footer.addWidget(self.play_button)
         self.footer.addWidget(self.pause_button)
-        self.footer.addPermanentWidget(self.slider)
+        self.footer.addPermanentWidget(self.slider_label)
+        self.footer.addPermanentWidget(self.timestamper.slider)
 
         # ------------------------------
         # Adding Buttons to Layout and Window
@@ -157,7 +165,7 @@ class CustomDashboard(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
         # Timestamper object
-        self.timestamper = TimeStamper(slider=self.slider)
+        #self.timestamper = TimeStamper(slider=self.slider)
 
     def slider_moved(self, position):
         print(position)
@@ -176,6 +184,10 @@ class CustomDashboard(QMainWindow):
         for module in self.video_modules:
             module.pause()
             # time.sleep(1)
+
+    def update_slider_label(self, value):
+        value = int(value * (self.timestamper.max_time / 100))
+        self.slider_label.setText(f"Slider Value: {value}")
 
         # ------------------------------
         # Functions Paired with Button Press
