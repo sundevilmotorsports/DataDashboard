@@ -34,8 +34,6 @@ class LapChooser(QWidget):
 
         self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
 
-       
-
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
         self.y_combo = QComboBox(self.central_widget)
@@ -72,11 +70,6 @@ class LapChooser(QWidget):
             print(f"DataFrame for Lap {lap_number}:\n")
             print(lap_dataframe)
             print("\n" + "="*50 + "\n")
-
-        
-        
-       # for lap_number, lap_dataframe in self.lap_dataframes.items():
-            
         
         # checkable combo box addition from class defined below
         self.laps_combo = CheckableComboBox(self)
@@ -221,6 +214,10 @@ class LapChooser(QWidget):
 
         #print(self.plot_laps_dataframe)
         self.plot_graph()
+
+    def get_info(self):
+        """Returns value of self.x_set, the combobox for selecting the current dataset or csv. additionally it returns the current x and y columns"""
+        return self.x_set.currentText(), self.selected_x, self.selected_y
         
        
 
@@ -288,10 +285,11 @@ class LapModule(QMainWindow):
     '''
     def get_info(self):
         """Getter that returns an array with the layouts of the sideboxes"""
-        info = []
-        for i in self.data_set:
-            info.append(i.get_info())
-        return info
+        return self.setChooser.get_info()
+      
+    
+    def get_graph_type():
+        return "LapModule"
 
 ###Found this on stackexchange.so dont ask, looks cool tho
 class CheckableComboBox(QComboBox):

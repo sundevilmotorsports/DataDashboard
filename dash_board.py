@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QMdiSubWindow,
     QSlider,
 )
+import os
 from PyQt5.QtGui import QIcon
 from csv_import import CSVImport
 import session_handler as handler
@@ -43,6 +44,10 @@ class CustomDashboard(QMainWindow):
         self.sessions = []
         self.graph_modules = []
         self.video_modules = []
+        #create sessions and data folder is not there already
+        os.makedirs("sessions", exist_ok=True)
+        os.makedirs("data", exist_ok=True)
+
         sessions = glob.glob(f"sessions/*.pkl")
         data = glob.glob(f"data/*.pkl")
         for file in sessions:
@@ -205,7 +210,7 @@ class CustomDashboard(QMainWindow):
         """
         sub_window = QMdiSubWindow()
         sub_window.setWindowTitle("Live Module")
-        graph_module = GraphModule(live=True)
+        graph_module = GraphModule()
         sub_window.setWidget(graph_module)
         self.mdi_area.addSubWindow(sub_window)
         sub_window.show()
@@ -266,12 +271,19 @@ class CustomDashboard(QMainWindow):
         for i, tab in enumerate(self.mdi_area.subWindowList()):
             tab.move(active_session["pos"][i][0], active_session["pos"][i][1])
             tab.resize(active_session["size"][i][0], active_session["size"][i][1])
-            tab.widget().init_combobox(
-                active_session["metadata"][i][0][0],
-                active_session["metadata"][i][0][1],
-                active_session["metadata"][i][0][2],
-            )
-
+            if (tab.widget().get_graph_type() == "GraphModule"):
+                tab.widget().init_combobox(
+                    active_session["metadata"][i][0][0],
+                    active_session["metadata"][i][0][1],
+                    active_session["metadata"][i][0][2],
+                )
+            else:
+                #implement for lap module, should be able to show the different laps from when saved
+                tab.widget().init_combobox(
+                    active_session["metadata"][i][0][0],
+                    active_session["metadata"][i][0][1],
+                    active_session["metadata"][i][0][2],
+                )
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -45,12 +45,10 @@ class DatasetChooser(QWidget):
         central_widget: QWidget,
         plot: MplCanvas,
         timestamper: TimeStamper,
-        live=False,
     ):
         super().__init__()
         self.central_widget = central_widget
         self.plot_widget = plot
-        self.live = live
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
         self.timestamper = timestamper
@@ -142,13 +140,9 @@ class DatasetChooser(QWidget):
 
     def set_combo_box(self):
         """Populates ComboBoxes with all different columns within the active data"""
-        try:
-            if self.live:
-                names = handler.get_live_names()
-                data = handler.get_live_sessions()
-            else:
-                names = handler.get_names()
-                data = handler.get_active_sessions()
+        try:    
+            names = handler.get_names()
+            data = handler.get_active_sessions()
             self.x_set.addItems(names)
             self.x_combo.clear()
             self.y_combo.clear()
@@ -457,9 +451,8 @@ class DatasetChooser(QWidget):
 
 
 class GraphModule(QMainWindow):
-    def __init__(self, live=False, timestamper=None):
+    def __init__(self, timestamper=None):
         super().__init__()
-        self.live = live
         self.data_set = []
         self.setWindowTitle("Module")
         self.setGeometry(100, 100, 1050, 600)
@@ -486,7 +479,7 @@ class GraphModule(QMainWindow):
 
         self.timestamper = timestamper
         self.setChooser = DatasetChooser(
-            self.central_widget, self.plot_widget, timestamper, self.live
+            self.central_widget, self.plot_widget, timestamper
         )
         sidebox, sidebox1 = self.setChooser.get_scroll_areas()
         self.data_set.append(self.setChooser)
@@ -541,5 +534,12 @@ class GraphModule(QMainWindow):
         info = []
         for i in self.data_set:
             info.append(i.get_info())
-
         return info
+
+    def init_combobox(self, xSet, xSelect, ySelect):
+        """Sets the front-text comboboxes within the sidebar to the currently selected column within the active dataset"""
+        for dataset in self.data_set:
+            dataset.init_combobox(xSet, xSelect, ySelect)
+
+    def get_graph_type(self):
+        return "GraphModule"
