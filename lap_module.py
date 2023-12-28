@@ -68,14 +68,15 @@ class LapChooser(QWidget):
             if 'Time (s)' in lap_dataframe.columns:
                 min_seconds = lap_dataframe['Time (s)'].min()
                 lap_dataframe['Time (s)'] -= min_seconds
-
-        
-        
-        for lap_number, lap_dataframe in self.lap_dataframes.items():
             self.max = max(self.max, lap_dataframe['Time (s)'].max())
             print(f"DataFrame for Lap {lap_number}:\n")
             print(lap_dataframe)
             print("\n" + "="*50 + "\n")
+
+        
+        
+       # for lap_number, lap_dataframe in self.lap_dataframes.items():
+            
         
         # checkable combo box addition from class defined below
         self.laps_combo = CheckableComboBox(self)
@@ -196,7 +197,7 @@ class LapChooser(QWidget):
                 #print("lil something")
                 self.x_data = lap_dataframe[self.selected_x]
                 self.y_data = lap_dataframe[self.selected_y]
-                self.plot_widget.ax1.plot(self.x_data, self.y_data, label=f"Lap {lap_number}")
+                self.plot_widget.ax1.plot(self.x_data, self.y_data, label=f"Lap {lap_dataframe['Lap (#)'][0]}")
             else:
                 print("Either data frame is empty, or the selection for x and y axis are not valid")
         
@@ -204,7 +205,7 @@ class LapChooser(QWidget):
         self.plot_widget.ax1.set_ylabel(self.selected_y)
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
         self.plot_widget.ax1.grid()
-        self.plot_widget.ax1.legend()
+        #self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_xlim(0, self.max)
         self.trim_graph()
         self.plot_widget.draw()
@@ -215,7 +216,7 @@ class LapChooser(QWidget):
         #print(selected_lap_numbers)
 
         selected_lap_dataframes = [self.lap_dataframes[i] for i in selected_lap_numbers]
-        print(selected_lap_dataframes)
+        #print(selected_lap_dataframes)
         self.plot_laps_dataframe = selected_lap_dataframes
 
         #print(self.plot_laps_dataframe)
@@ -265,7 +266,7 @@ class LapModule(QMainWindow):
         #self.laps_combo.model().dataChanged.connect(self.manage_laps)
 
         self.reset_button = QPushButton("Reset", self.central_widget)
-        #self.reset_button.clicked.connect(self.reset)
+        self.reset_button.clicked.connect(self.reset)
         self.footer = QStatusBar()
         self.setStatusBar(self.footer)
         self.footer.addWidget(self.reset_button)
@@ -273,12 +274,12 @@ class LapModule(QMainWindow):
         collapsible_container = Collapsible()
         collapsible_container.setContentLayout(sideBoxLayout)
         self.layout.addWidget(collapsible_container)
-    '''
+    
     def reset(self):
-        self.pause_graph()
         self.setChooser.set_active_data()
+        self.setChooser.plot_laps_dataframe = {}
         self.setChooser.plot_graph()
-
+    '''
     def play_graph(self):
         self.setChooser.play_graph()
 
@@ -345,11 +346,13 @@ class CheckableComboBox(QComboBox):
             if event.type() == QEvent.MouseButtonRelease:
                 index = self.view().indexAt(event.pos())
                 item = self.model().item(index.row())
-
-                if item.checkState() == Qt.Checked:
-                    item.setCheckState(Qt.Unchecked)
-                else:
-                    item.setCheckState(Qt.Checked)
+                try:
+                    if item.checkState() == Qt.Checked:
+                        item.setCheckState(Qt.Unchecked)
+                    else:
+                        item.setCheckState(Qt.Checked)
+                except:
+                    print("AttributeError: 'NoneType' object has no attribute 'checkState'")
                 return True
         return False
 
