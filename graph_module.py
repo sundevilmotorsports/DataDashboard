@@ -1,4 +1,5 @@
 import time
+import matplotlib
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg,
     NavigationToolbar2QT as NavigationToolbar,
@@ -7,10 +8,9 @@ from matplotlib.backend_bases import MouseButton
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import matplotlib
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIntValidator
-from PyQt5.QtCore import Qt, QObject
+from PyQt5.QtGui import QIntValidator, QPalette, QFontMetrics, QStandardItem
+from PyQt5.QtCore import Qt, QObject, QEvent
 import session_handler as handler
 from collapsible_module import Collapsible
 from timestamper import TimeStamper
@@ -53,18 +53,19 @@ class DatasetChooser(QWidget):
         self.sidebox2 = QVBoxLayout()
         self.timestamper = timestamper
         #self.timestamper.slider.valueChanged.connect(lambda: self.trim_graph(source="slider"))
-        self.animation_ongoing = False
 
         self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
 
-        self._plot_ref = None
         self.left = False
 
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
-        self.y_combo = QComboBox(self.central_widget)
+        #self.y_combo = QComboBox(self.central_widget)
+        self.y_combo = CheckableComboBox(self)
+        self.y_combo.setFixedHeight(25)
         self.x_combo.currentIndexChanged.connect(self.plot_graph)
-        self.y_combo.currentIndexChanged.connect(self.plot_graph)
+        #self.y_combo.currentIndexChanged.connect(self.plot_graph)
+        self.y_combo.model().dataChanged.connect(self.plot_graph)
 
         # creating dropdowns and updating dataset when changed
         self.x_set = QComboBox(self.central_widget)
@@ -76,13 +77,13 @@ class DatasetChooser(QWidget):
         trim_under = QHBoxLayout()
         self.trim_container = QVBoxLayout()
 
+        self.selected_y_columns = None
+        self.selected_x = None
 
         #integer validation for text boxes
         validator = QIntValidator()
 
-
         ###   DEPRECATED AUTOFIT
-
         #self.autofit_widget = QCheckBox("Autofit")
         #self.autofit_widget.stateChanged.connect(self.trim_graph)
         #trim_upper.addWidget(self.autofit_widget)
@@ -103,12 +104,8 @@ class DatasetChooser(QWidget):
         self.trim_container.addLayout(trim_upper)
         self.trim_container.addLayout(trim_under)
 
-
         ### array for managing all connections that call to trim_graph
-        self.trim_connections = []
-        self.trim_connections.append(self.begin_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.end_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.timestamper.slider.valueChanged.connect(self.slider_trim_graph))
+        self.connect_trim_connections()
 
         # creates labels and adds comboboxes to select columns in the graph
         self.set_combo_box()
@@ -212,26 +209,12 @@ class DatasetChooser(QWidget):
     def trim_graph(self):        
         """Function that when called, will edit the bounds of the graph based on whether autofit is selected or not. Otherwise values in textboxes will be set to the bounds"""
         print("normal trim or end or begin")
-        try:
-            self.begin_widget.textChanged.disconnect(self.trim_graph)
-            self.end_widget.textChanged.disconnect(self.trim_graph)
-            self.timestamper.slider.valueChanged.disconnect(self.slider_trim_graph)
-            self.trim_connections = []
-        except Exception as e:
-            print("Could not disconnect all connections" + str(e))
+        
+        self.disconnect_trim_connections()
 
         if self.begin_widget.text() == "" or self.end_widget.text() == "":
             return
-        
-        ''' AUTOFIT DEPRECATED       
-        if self.autofit_widget.isChecked():
-            # NOTE: THIS MAY BE PROBLEMATIC WHEN ENABLED DUE TO IMPLEMENTATION
-            self.begin = self.active_dataX[self.selected_x].iloc[0]
-            self.end = self.active_dataX[self.selected_x].iloc[-1]
-            self.begin_widget.setDisabled(True)
-            self.end_widget.setDisabled(True)
-        else:
-        '''            
+               
         self.begin = float(self.begin_widget.text())
         self.end = float(self.end_widget.text())
         #self.begin_widget.setEnabled(True)
@@ -240,26 +223,17 @@ class DatasetChooser(QWidget):
         self.timestamper.set_init_time(self.begin)
         #self.timestamper.set_max_time(self.end)
         self.begin_widget.setText(str(int(self.begin)))
-        self.end_widget.setText(str(int(self.end)))
-        self._plot_ref.axes.set_xlim(self.begin, self.end)
+        self.end_widget.setText(str(int(self.end))) 
+        # Check if _plot_ref is not None and has valid axes
+        self.plot_widget.ax1.set_xlim(self.begin, self.end)
         self.plot_widget.draw()
-
-        self.trim_connections = []
-        self.trim_connections.append(self.begin_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.end_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.timestamper.slider.valueChanged.connect(self.slider_trim_graph))
         
-
-
+        self.connect_trim_connections()
+        
     def slider_trim_graph(self):
         print("slider trim")
-        try:
-            self.begin_widget.textChanged.disconnect(self.trim_graph)
-            self.end_widget.textChanged.disconnect(self.trim_graph)
-            self.timestamper.slider.valueChanged.disconnect(self.slider_trim_graph)
-            self.trim_connections = []
-        except Exception as e:
-            print("Could not disconnect all connections" + str(e))
+        
+        self.disconnect_trim_connections()
 
         self.begin = float(self.timestamper.slider.value() * (self.timestamper.max_time / 100))
         self.end = float(self.begin + 100)
@@ -267,14 +241,10 @@ class DatasetChooser(QWidget):
         #self.timestamper.set_max_time(self.end)
         self.begin_widget.setText(str(int(self.begin)))
         self.end_widget.setText(str(int(self.end)))
-        self._plot_ref.axes.set_xlim(self.begin, self.end)
+        self.plot_widget.ax1.set_xlim(self.begin, self.end)
         self.plot_widget.draw()
-
-        self.trim_connections = []
-        self.trim_connections.append(self.begin_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.end_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.timestamper.slider.valueChanged.connect(self.slider_trim_graph))
-
+        
+        self.connect_trim_connections()
 
     def click_trim(self):
         """When called, click_trim() is responsible for adjusting the visible range of data, by about 10%. It zooms in if left click or zooms out if right click"""
@@ -297,7 +267,7 @@ class DatasetChooser(QWidget):
             self.begin_widget.setText(str(int(self.begin_widget.text()) + adjustment))
             self.end_widget.setText(str(int(self.end_widget.text()) - adjustment))
 
-        self._plot_ref.axes.set_xlim(
+        self.plot_widget.set_xlim(
             float(self.begin_widget.text()), float(self.end_widget.text())
         )
         self.plot_widget.draw()
@@ -309,37 +279,34 @@ class DatasetChooser(QWidget):
         """
         try:
             self.selected_x = self.x_combo.currentText()
-            self.selected_y = self.y_combo.currentText()
-            self.x_data = self.active_dataX[self.selected_x]
-            self.y_data = self.active_dataX[self.selected_y]
+            self.selected_y_columns = self.y_combo.currentData()
             
-            if self._plot_ref is None:
-                plotrefs = self.plot_widget.ax1.plot(
-                    self.x_data, self.y_data, label=self.x_set.currentText()
-                )
-                self._plot_ref = plotrefs[0]
+            if not isinstance(self.selected_y_columns, list):
+                self.selected_y_columns = [self.selected_y_columns]
 
-            else:
-                self._plot_ref.set_data(self.x_data, self.y_data)
-                self._plot_ref.set_label(self.x_set.currentText())
-                self.plot_widget.ax1.relim()
-                self.plot_widget.ax1.autoscale()
-                self.plot_widget.ax1.autoscale()
-            
+            # Extract the selected columns from self.active_dataX
+            y_data = self.active_dataX[self.selected_y_columns]
+
+            self.plot_widget.ax1.clear()
+            print(self.selected_y_columns)
+            for col in self.selected_y_columns:
+                self.plot_widget.ax1.plot(
+                    self.active_dataX[self.selected_x], self.active_dataX[col], label=col
+                )
+                
             self.plot_widget.ax1.set_xlabel(self.selected_x)
-            self.plot_widget.ax1.set_ylabel(self.selected_y)
-            self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
+            self.plot_widget.ax1.set_ylabel(", ".join(self.selected_y_columns))
+            self.plot_widget.ax1.set_title(self.selected_x + " vs " + ", ".join(self.selected_y_columns))
             self.plot_widget.ax1.grid()
-            self.plot_widget.ax1.legend()
+            if not y_data.empty:
+                self.plot_widget.ax1.legend()
             self.plot_widget.ax1.set_xlim(self.begin, self.end)
-            self.trim_graph()
             self.plot_widget.draw()
         except Exception as e:
             print("Error plotting graph: " + str(e))
 
     def play_graph(self):
-        """May not be finished. This creates the animation to redraw the graph as it would iterate through the x values of the dataset. Calls animate() along the way"""
-        self.animation_ongoing = True
+        """Animating of graph is simply a function animation where the timestamper sends a new integer value. Usually one more than last time, it is fed into the animate() function where the xlimits are simply updated to fit the new timestamper value"""
         try:
             if hasattr(self, "ani") and self.ani.event_source != None:
                 self.ani.resume()
@@ -355,9 +322,8 @@ class DatasetChooser(QWidget):
             )
             self.plot_widget.draw()
         except Exception as e:
-            self.plot_graph()
+            #self.plot_graph()
             print("Error re-drawing graph: " + str(e))
-        self.animation_ongoing = False
        
 
     def animate(self, timestamp):
@@ -367,8 +333,32 @@ class DatasetChooser(QWidget):
         ###allows modifying of labels without calling trim graph
         ##### also i wanted to move this into play_graph() but didnt work so its here.
         print("timestamp fed into animate: " + str(timestamp))
+        
+        self.disconnect_trim_connections()
+        
+        self.plot_widget.ax1.set_xlim(max(1, timestamp - 100), max(2, timestamp))
+        #print("xlim min: " + str(max(1, timestamp - 100)) + "; xlim max: " + str(max(2, timestamp)))
+        self.begin_widget.setText(str(int(self.plot_widget.ax1.get_xlim()[0])))
+        self.end_widget.setText(str(int(self.plot_widget.ax1.get_xlim()[1])))
+
+        self.connect_trim_connections()
+           
+    
+    def pause_graph(self):
+        """Pauses the graph animation"""
         try:
-            print("removing connections")
+            self.ani.pause()
+        except Exception as e:
+            print("Error pausing graph " + str(e))
+        ###Need to re-establish connections after pause
+        
+        self.disconnect_trim_connections()
+        self.connect_trim_connections()
+
+
+    def disconnect_trim_connections(self):
+        """Disconnects connections to trim_graph."""
+        try:
             self.begin_widget.textChanged.disconnect(self.trim_graph)
             self.end_widget.textChanged.disconnect(self.trim_graph)
             self.timestamper.slider.valueChanged.disconnect(self.slider_trim_graph)
@@ -376,57 +366,8 @@ class DatasetChooser(QWidget):
         except Exception as e:
             print("Error disconnecting from trim_graph " + str(e))
 
-        try:
-            activeXY = self.active_dataX[
-                (self.active_dataX.iloc[:, 0] >= 0)
-                & (self.active_dataX.iloc[:, 0] <= timestamp)
-            ][[self.selected_x, self.selected_y]]
-            self.plot_widget.activeXY[0] = activeXY[self.selected_x].tolist()
-            self.plot_widget.activeXY[1] = activeXY[self.selected_y].tolist()
-            self.plot_widget.ax1.clear()
-            plotrefs = self.plot_widget.ax1.plot(
-                self.plot_widget.activeXY[0], self.plot_widget.activeXY[1]
-            )
-
-            self._plot_ref = plotrefs[0]
-            self.plot_widget.ax1.set_xlabel(self.selected_x)
-            self.plot_widget.ax1.set_ylabel(self.selected_y)
-            ###added max so timestamp does not set below 1, not sure for upper bound but thats a problem for later
-            self.plot_widget.ax1.set_xlim(max(1, timestamp - 100), max(2, timestamp))
-            print("xlim min: " + str(max(1, timestamp - 100)) + "; xlim max: " + str(max(2, timestamp)))
-            self.begin_widget.setText(str(int(self.plot_widget.ax1.get_xlim()[0])))
-            self.end_widget.setText(str(int(self.plot_widget.ax1.get_xlim()[1])))
-            # self.plot_widget.ax1.legend()
-            self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
-            self.plot_widget.ax1.grid()
-        except Exception as e:
-            print("Error animating graph: " + str(e))
-
-
-        #self.trim_connections = []
-        print("reconnecting connections")
-        self.trim_connections = []
-        self.trim_connections.append(self.begin_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.end_widget.textChanged.connect(self.trim_graph))
-        self.trim_connections.append(self.timestamper.slider.valueChanged.connect(self.slider_trim_graph))
-
-
-
-    def pause_graph(self):
-        """Pauses the graph animation"""
-        try:
-            self.ani.pause()
-            self.animation_ongoing = False
-        except Exception as e:
-            print("Error pausing graph " + str(e))
-        ###Need to re-establish connections after pause
-        try:
-            self.begin_widget.textChanged.disconnect(self.trim_graph)
-            self.end_widget.textChanged.disconnect(self.trim_graph)
-            self.timestamper.slider.valueChanged.disconnect(self.slider_trim_graph)
-            self.trim_connections = []
-        except Exception as e:
-            print("Could not disconnect all connections" + str(e))
+    def connect_trim_connections(self):
+        """Reconnects connections to trim_graph."""
         self.trim_connections = []
         self.trim_connections.append(self.begin_widget.textChanged.connect(self.trim_graph))
         self.trim_connections.append(self.end_widget.textChanged.connect(self.trim_graph))
@@ -434,17 +375,8 @@ class DatasetChooser(QWidget):
 
     def get_info(self):
         """Returns value of self.x_set, the combobox for selecting the current dataset or csv. additionally it returns the current x and y columns"""
-        return self.x_set.currentText(), self.selected_x, self.selected_y
+        return self.x_set.currentText(), self.selected_x, self.selected_y_columns
 
-    ''' DOESNT WORK THOUGH IMPLEMENTATION IS ADVANTAGEOUS
-    def add_connection(self, signal, slot):
-        for connection in self.trim_connections:
-            if connection.signal == signal and connection.receiver == slot:
-                return 
-
-        new_connection = signal.connect(slot)
-        self.trim_connections.append(new_connection)
-    '''
 
 # ------------------------------
 # This class creates a graphical application with a main window that allows users to add and configure multiple datasets for plotting.
@@ -488,14 +420,14 @@ class GraphModule(QMainWindow):
         sideBoxLayout.addLayout(sidebox)
         sideBoxLayout.addLayout(sidebox1)
 
-        self.add_dataset_button = QPushButton("Add Dataset", self.central_widget)
-        self.add_dataset_button.clicked.connect(self.add_dataset)
+        #self.add_dataset_button = QPushButton("Add Dataset", self.central_widget)
+        #self.add_dataset_button.clicked.connect(self.add_dataset)
         self.reset_button = QPushButton("Reset", self.central_widget)
         self.reset_button.clicked.connect(self.reset)
         self.footer = QStatusBar()
         self.setStatusBar(self.footer)
         self.footer.addWidget(self.reset_button)
-        sideBoxLayout.addWidget(self.add_dataset_button)
+        #sideBoxLayout.addWidget(self.add_dataset_button)
 
         collapsible_container = Collapsible()
         collapsible_container.setContentLayout(sideBoxLayout)
@@ -545,3 +477,122 @@ class GraphModule(QMainWindow):
 
     def get_graph_type(self):
         return "GraphModule"
+
+###Found this on stackexchange.so dont ask, looks cool tho
+class CheckableComboBox(QComboBox):
+    # Subclass Delegate to increase item height
+    class Delegate(QStyledItemDelegate):
+        def sizeHint(self, option, index):
+            size = super().sizeHint(option, index)
+            size.setHeight(20)
+            return size
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Make the combo editable to set a custom text, but readonly
+        self.setEditable(True)
+        self.lineEdit().setReadOnly(True)
+        # Make the lineedit the same color as QPushButton
+        palette = qApp.palette()
+        palette.setBrush(QPalette.Base, palette.button())
+        self.lineEdit().setPalette(palette)
+
+        # Use custom delegate
+        self.setItemDelegate(CheckableComboBox.Delegate())
+
+        # Update the text when an item is toggled
+        self.model().dataChanged.connect(self.updateText)
+
+        # Hide and show popup when clicking the line edit
+        self.lineEdit().installEventFilter(self)
+        self.closeOnLineEditClick = False
+
+        # Prevent popup from closing when clicking on an item
+        self.view().viewport().installEventFilter(self)
+
+    def resizeEvent(self, event):
+        # Recompute text to elide as needed
+        self.updateText()
+        super().resizeEvent(event)
+
+    def eventFilter(self, object, event):
+
+        if object == self.lineEdit():
+            if event.type() == QEvent.MouseButtonRelease:
+                if self.closeOnLineEditClick:
+                    self.hidePopup()
+                else:
+                    self.showPopup()
+                return True
+            return False
+
+        if object == self.view().viewport():
+            if event.type() == QEvent.MouseButtonRelease:
+                index = self.view().indexAt(event.pos())
+                item = self.model().item(index.row())
+                try:
+                    if item.checkState() == Qt.Checked:
+                        item.setCheckState(Qt.Unchecked)
+                    else:
+                        item.setCheckState(Qt.Checked)
+                except:
+                    print("AttributeError: 'NoneType' object has no attribute 'checkState'")
+                return True
+        return False
+
+    def showPopup(self):
+        super().showPopup()
+        # When the popup is displayed, a click on the lineedit should close it
+        self.closeOnLineEditClick = True
+
+    def hidePopup(self):
+        super().hidePopup()
+        # Used to prevent immediate reopening when clicking on the lineEdit
+        self.startTimer(100)
+        # Refresh the display text when closing
+        self.updateText()
+
+    def timerEvent(self, event):
+        # After timeout, kill timer, and reenable click on line edit
+        self.killTimer(event.timerId())
+        self.closeOnLineEditClick = False
+
+    def updateText(self):
+        texts = []
+        for i in range(self.model().rowCount()):
+            if self.model().item(i).checkState() == Qt.Checked:
+                texts.append(self.model().item(i).text())
+        text = ", ".join(texts)
+
+        # Compute elided text (with "...")
+        metrics = QFontMetrics(self.lineEdit().font())
+        elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
+        self.lineEdit().setText(elidedText)
+
+    def addItem(self, text, data=None):
+        item = QStandardItem()
+        item.setText(text)
+        if data is None:
+            item.setData(text)
+        else:
+            item.setData(data)
+        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
+        item.setData(Qt.Unchecked, Qt.CheckStateRole)
+        self.model().appendRow(item)
+
+    def addItems(self, texts, datalist=None):
+        for i, text in enumerate(texts):
+            try:
+                data = datalist[i]
+            except (TypeError, IndexError):
+                data = None
+            self.addItem(text, data)
+
+    def currentData(self):
+        # Return the list of selected items data
+        res = []
+        for i in range(self.model().rowCount()):
+            if self.model().item(i).checkState() == Qt.Checked:
+                res.append(self.model().item(i).data())
+        return res

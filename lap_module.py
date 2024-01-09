@@ -10,9 +10,6 @@ from matplotlib.figure import Figure
 import session_handler as handler
 from collapsible_module import Collapsible
 
-
-
-
 class MplCanvas(FigureCanvasQTAgg):
     activeXY = [[], []]
     def __init__(self, parent=None):
@@ -24,7 +21,7 @@ class LapChooser(QWidget):
     def __init__(
         self,
         central_widget: QWidget,
-        plot: MplCanvas,
+        plot: Figure,
     ):
         super().__init__()
         self.central_widget = central_widget
@@ -32,7 +29,7 @@ class LapChooser(QWidget):
         self.sidebox = QVBoxLayout()
         self.sidebox2 = QVBoxLayout()
 
-        self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
+        #self.plot_widget.fig.canvas.mpl_connect("button_press_event", self.on_click)
 
         self.sidebox.setAlignment(Qt.AlignTop)
         self.x_combo = QComboBox(self.central_widget)
@@ -76,6 +73,7 @@ class LapChooser(QWidget):
         self.laps_combo.setStyleSheet(
             "background-color: white; color: black; font-size: 14px;"
         )
+        self.laps_combo.setFixedHeight(25)
         self.laps_combo.model().dataChanged.connect(self.manage_Laps)
         # array to hold every 'lap', just a placeholder to populate combobox
         self.lap_array = []
@@ -90,12 +88,12 @@ class LapChooser(QWidget):
         self.set_combo_box()
         self.sidebox.addWidget(QLabel("Select Dataset:"))
         self.sidebox.addWidget(self.x_set)
-        self.sidebox.addWidget(QLabel("Select Laps: "))
-        self.sidebox.addWidget(self.laps_combo)
         self.sidebox.addWidget(QLabel("Select X Axis Column:"))
         self.sidebox.addWidget(self.x_combo)
         self.sidebox.addWidget(QLabel("Select Y Axis Column:"))
         self.sidebox.addWidget(self.y_combo)
+        self.sidebox.addWidget(QLabel("Select Laps: "))
+        self.sidebox.addWidget(self.laps_combo)
 
     def on_click(self, event):
         """On click function is called during a click, decides if it is a left click, and calls click_trim() to zoom the graph in/out"""
@@ -198,7 +196,7 @@ class LapChooser(QWidget):
         self.plot_widget.ax1.set_ylabel(self.selected_y)
         self.plot_widget.ax1.set_title(self.selected_x + " vs " + self.selected_y)
         self.plot_widget.ax1.grid()
-        #self.plot_widget.ax1.legend()
+        self.plot_widget.ax1.legend()
         self.plot_widget.ax1.set_xlim(0, self.max)
         self.trim_graph()
         self.plot_widget.draw()
