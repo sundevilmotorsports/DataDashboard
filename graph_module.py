@@ -119,6 +119,10 @@ class DatasetChooser(QWidget):
 
         self.sidebox2.setAlignment(Qt.AlignTop)
 
+
+        ### styling for matplotlib
+        #plt.style.use('dark_background'), looks bad lmao
+
     def on_click(self, event):
         """On click function is called during a click, decides if it is a left click, and calls click_trim() to zoom the graph in/out"""
         if event.dblclick:
@@ -179,6 +183,8 @@ class DatasetChooser(QWidget):
         ].get_dataframe()
         self.x_combo.addItems(self.active_dataX.columns.tolist())
         self.y_combo.addItems(self.active_dataX.columns.tolist())
+        time_col = handler.get_active_sessions()[0].get_metadata()['Time']
+        #self.timestamper.slider.setRange(0, int(self.active_dataX[time_col].max()))
         ###TAKE NOTE THE NEXT 3 LINES CALL trim_graph 3 TIMES, don't think we want from a performance and maintenance perspective
         self.begin_widget.setText(str(self.active_dataX[self.selected_x].iloc[0]))
         self.end_widget.setText(str(self.active_dataX[self.selected_x].iloc[-1]))
@@ -299,7 +305,7 @@ class DatasetChooser(QWidget):
             self.plot_widget.ax1.set_title(self.selected_x + " vs " + ", ".join(self.selected_y_columns))
             self.plot_widget.ax1.grid()
             if not y_data.empty:
-                self.plot_widget.ax1.legend()
+                self.plot_widget.ax1.legend(loc='lower left')
             self.plot_widget.ax1.set_xlim(self.begin, self.end)
             self.plot_widget.draw()
         except Exception as e:
@@ -315,7 +321,7 @@ class DatasetChooser(QWidget):
                 self.plot_widget.fig,
                 self.animate,
                 frames=self.timestamper.time_generator,
-                interval=50,
+                interval=20,
                 repeat=True,
                 save_count=50,
                 cache_frame_data=True,
@@ -342,7 +348,6 @@ class DatasetChooser(QWidget):
         self.end_widget.setText(str(int(self.plot_widget.ax1.get_xlim()[1])))
 
         self.connect_trim_connections()
-           
     
     def pause_graph(self):
         """Pauses the graph animation"""
@@ -407,7 +412,7 @@ class GraphModule(QMainWindow):
 
         toolbar = NavigationToolbar(self.plot_widget, self)
         plot_layout = QVBoxLayout(graph_widget)
-        plot_layout.addWidget(toolbar)
+        #plot_layout.addWidget(toolbar)
         plot_layout.addWidget(self.plot_widget)
         self.layout.addWidget(graph_widget)
 
@@ -448,7 +453,7 @@ class GraphModule(QMainWindow):
         self.setChooser.pause_graph()
 
     def add_dataset(self):
-        """Function called when 'Add Dataset' button is clicked, creates a new sidebox to add to the existing sidebox"""
+        """Deprecated function"""
         setChooser = DatasetChooser(
             self.central_widget, self.plot_widget, self.timestamper
         )
@@ -457,7 +462,7 @@ class GraphModule(QMainWindow):
         sidebox, sidebox1 = setChooser.get_scroll_areas_without_trim()
         sideBoxLayout.addLayout(sidebox)
         sideBoxLayout.addLayout(sidebox1)
-        sideBoxLayout.insertWidget(-1, self.add_dataset_button)
+        #sideBoxLayout.insertWidget(-1, self.add_dataset_button)
         # self.layout.addLayout(sideBoxLayout)
         collapsible_container = Collapsible()
         collapsible_container.setContentLayout(sideBoxLayout)

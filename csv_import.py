@@ -27,9 +27,14 @@ class CSVImport(QDialog):
         # get headers
         col_select_layout: QGridLayout = QGridLayout()
         self.combo_time = QComboBox()
+        self.combo_time.addItems(columns)
+
+        #check for laps column
+        self.checkbox = QCheckBox("Enable if CSV contains lap counter, then choose appropriate column:", self)
+        self.checkbox.stateChanged.connect(self.toggle_combobox_state)
         self.combo_lap = QComboBox()
-        self.combo_lat = QComboBox()
-        self.combo_lon = QComboBox()
+        self.combo_lap.setEnabled(False)
+        self.combo_lap.addItems(columns)
 
         # session details
         session_details_layout: QVBoxLayout = QVBoxLayout()
@@ -47,6 +52,11 @@ class CSVImport(QDialog):
         session_details_layout.addWidget(self.edit_car)
         session_details_layout.addWidget(self.edit_track)
         session_details_layout.addWidget(self.timestamp_column)
+        session_details_layout.addWidget(QLabel("Select a column which indicates a timestamp:"))
+        session_details_layout.addWidget(self.combo_time)
+        #session_details_layout.addWidget(QLabel("Enable if CSV contains lap counter, then choose appropriate column: "))
+        session_details_layout.addWidget(self.checkbox)
+        session_details_layout.addWidget(self.combo_lap)
 
         # dialog management
         mgmt_layout: QHBoxLayout = QHBoxLayout()
@@ -62,36 +72,42 @@ class CSVImport(QDialog):
         self.layout.addLayout(session_details_layout)
         self.layout.addLayout(mgmt_layout)
 
+    def toggle_combobox_state(self):
+        if self.checkbox.isChecked():
+            self.combo_lap.setEnabled(True)
+        else:
+            self.combo_lap.setEnabled(False)
+
     def cancel(self):
         self.done(0)
 
-    def find_gps_fix(self):
-        ts = 0
-        return ts
-
     def accept(self):
-        time_idx = self.combo_time.currentText()
-        lap_idx = self.combo_lap.currentText()
-        lat_idx = self.combo_lat.currentText()
-        lon_idx = self.combo_lon.currentText()
+        time_column_name = self.combo_time.currentText()
+        column_to_move = self.df.pop(time_column_name)
+        self.df.insert(0, time_column_name, column_to_move)
+
+        print(self.df)
+
+        if (self.checkbox.isChecked()):
+            lap_column_name = self.combo_lap.currentText()
+        else:
+            lap_column_name = ''
 
         name = self.edit_name.text()
         date = self.edit_date.text()
         driver = self.edit_driver.text()
         car = self.edit_car.text()
         track = self.edit_track.text()
+        #set_session(df, time, lap, name, date, driver, car, track):
         new_session = Session.set_session(
             self.df,
-            time_idx,
-            lap_idx,
-            lat_idx,
-            lon_idx,
+            time_column_name,
+            lap_column_name,
             name,
             date,
             driver,
             car,
             track,
-            self.find_gps_fix(),
         )
         handler.add_session(new_session)
 

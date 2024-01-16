@@ -14,22 +14,26 @@ class Session():
     def get_metadata(self):
         return self.logger_metadata
 
+    def get_lap_value(self):
+        return self.logger_metadata.get('Lap')
+
+    def get_time_value(self):
+        return self.logger_metadata.get('Time')
+
 # add a session to the workspace
-def set_session(df, time, lap, lat, lon, name, date, driver, car, track, gpsfix):
+def set_session(df, time, lap, name, date, driver, car, track):
     new_metadata = {
         'Date': [date][0],
         'Driver': [driver][0],
         'Car': [car][0],
         'Track': [track][0],
         'Name': [name][0],
-        'Lap': [lap][0],
         'Time': [time][0],
-        'Lon': [lon][0],
-        'Lat': [lat][0],
-        'GPS Fix': [gpsfix][0]
+        'Lap' : [lap][0],
     }
     new_session = Session(df, new_metadata)
     with open(f"data/{name}.pkl", "wb") as f:
         pickle.dump(new_session, f)
     return new_session
+
 

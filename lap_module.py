@@ -60,13 +60,14 @@ class LapChooser(QWidget):
         #max value for x axis i.e seconds
         self.max = 0
         for lap_number, lap_dataframe in self.lap_dataframes.items():
-            if 'Time (s)' in lap_dataframe.columns:
-                min_seconds = lap_dataframe['Time (s)'].min()
-                lap_dataframe['Time (s)'] -= min_seconds
-            self.max = max(self.max, lap_dataframe['Time (s)'].max())
+            min_seconds = lap_dataframe.iloc[:, 0].min()
+            lap_dataframe.iloc[:, 0] -= min_seconds
+            self.max = max(self.max, lap_dataframe.iloc[:, 0].max())
+            '''
             print(f"DataFrame for Lap {lap_number}:\n")
             print(lap_dataframe)
             print("\n" + "="*50 + "\n")
+            '''
         
         # checkable combo box addition from class defined below
         self.laps_combo = CheckableComboBox(self)
