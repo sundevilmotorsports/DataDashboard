@@ -16,7 +16,9 @@ from PyQt5.QtWidgets import (
 )
 import os
 from PyQt5.QtGui import QIcon
+from PyQt5 import QtWidgets
 from csv_import import CSVImport
+from sqlImporter import sqlImporter
 import session_handler as handler
 from graph_module import GraphModule
 from video_module import VideoPlayer
@@ -131,9 +133,10 @@ class CustomDashboard(QMainWindow):
         self.lap_button.setMaximumWidth(200)
         self.lap_button.clicked.connect(self.create_lap_module)
 
-        self.add_csv_button = QPushButton("Add CSV File")
+        self.add_csv_button = QPushButton("Add CSV/DB File")
         self.add_csv_button.setMaximumWidth(200)
         self.add_csv_button.clicked.connect(self.introduce_csv_importer)
+
 
         self.save_dashboard_button = QPushButton("Save Dashboard")
         self.save_dashboard_button.setMaximumWidth(200)
@@ -239,13 +242,24 @@ class CustomDashboard(QMainWindow):
         """Upon a connection with a button, this will open a file dialog which allows a user to select a csv file of their choosing.
         This file will be imported using our CSVImporter class and added to a set of active sessions
         """
-        filename = QFileDialog.getOpenFileName(filter="CSV Files(*.csv)")
-        if filename[0] == "":
-            return
-        importer = CSVImport(filename[0])
-        importer.exec()
-        self.select_session_button.clear()
-        self.active_data = handler.get_active_sessions()[0].get_dataframe()
+        filename = QFileDialog.getOpenFileName(filter="CSV Files(*.csv);;Database Files(*.db)")
+        print("file name" + filename[len(filename)-1])
+        if filename[len(filename)-1] == "CSV Files(*.csv)":
+            importer = CSVImport(filename[0])
+            importer.exec()
+            self.select_session_button.clear()
+            self.active_data = handler.get_active_sessions()[0].get_dataframe()
+        elif filename[len(filename)-1] == "Database Files(*.db)":
+             importer = sqlImporter(filename[0])
+             importer.exec()
+             self.select_session_button.clear()
+             self.active_data = handler.get_active_sessions()[0].get_dataframe() 
+            # Finish code 
+        else:
+            error_dialog = QtWidgets.QErrorMessage()
+            error_dialog.showMessage('What did you do') 
+
+        
 
     def save_dashboard(self):
         """Upon a connection with a button, this will save the current state of the dashboard and dump it into a new pickle file which will be stored in the sessions folder."""
